@@ -1,0 +1,45 @@
+[package]
+name = "demail"
+version = "1.0.0"
+description = "A sovereign desktop email client."
+authors = ["orpheus497"]
+license = "MIT"
+repository = ""
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[build-dependencies]
+tauri-build = { version = "1.5", features = [] }
+
+[dependencies]
+tauri = { version = "1.6.1", features = [ "shell-open", "notification-all", "window-all"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Core App
+imap = "2.4.1"
+lettre = { version = "0.10.4", features = ["smtp-transport", "builder", "tokio1-rustls-tls", "tokio1"] }
+oauth2 = "4.4.0"
+reqwest = { version = "0.11", features = ["json"] }
+native-tls = "0.2.11"
+rusqlite = { version = "0.29.0", features = ["bundled"] }
+tokio = { version = "1", features = ["full"] }
+mail-parser = "0.8.1"
+keyring = "2.0.2"
+chrono = { version = "0.4", features = ["serde"] }
+sha2 = "0.10.6"
+base64 = "0.21.4"
+rand = "0.8.5"
+url = "2.4.0"
+log = "0.4.17"
+env_logger = "0.10.0"
+thiserror = "1.0.40"
+anyhow = "1.0.71"
+ammonia = "3.3.0"
+headless_chrome = { version = "1.0.5", features = ["fetch"] }
+
+[features]
+# this feature is used for production builds or when `devPath` points to the filesystem
+# DO NOT REMOVE!!
+custom-protocol = ["tauri/custom-protocol"]
