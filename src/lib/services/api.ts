@@ -5,6 +5,8 @@ import type {
   Message,
   MessageHeader,
   OAuthProviderConfig,
+  Draft,
+  EmailSignature,
 } from '../types';
 
 export const addAccount = (emailAddress: string): Promise<string> => {
@@ -79,4 +81,47 @@ export const searchMessages = (
   query: string
 ): Promise<MessageHeader[]> => {
   return invoke('search_messages', { accountId, query });
+};
+
+export const saveDraft = (draft: Draft): Promise<number> => {
+  return invoke('save_draft', { draft });
+};
+
+export const getDrafts = (accountId: number): Promise<Draft[]> => {
+  return invoke('get_drafts', { accountId });
+};
+
+export const deleteDraft = (draftId: number): Promise<void> => {
+  return invoke('delete_draft', { draftId });
+};
+
+export const saveSignature = (signature: EmailSignature): Promise<number> => {
+  return invoke('save_signature', { signature });
+};
+
+export const getSignatures = (accountId: number): Promise<EmailSignature[]> => {
+  return invoke('get_signatures', { accountId });
+};
+
+export const deleteSignature = (signatureId: number): Promise<void> => {
+  return invoke('delete_signature', { signatureId });
+};
+
+export const downloadAttachment = (
+  attachmentId: number,
+  destinationPath: string
+): Promise<void> => {
+  return invoke('download_attachment', { attachmentId, destinationPath });
+};
+
+export const getMessagesPaginated = (
+  folderId: number,
+  limit: number,
+  offset: number
+): Promise<MessageHeader[]> => {
+  return invoke('get_messages_paginated', { folderId, limit, offset });
+};
+
+export const countMessagesInFolder = (folderId: number): Promise<number> => {
+  return invoke('count_messages_in_folder', { folderId });
 };

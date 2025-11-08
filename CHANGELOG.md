@@ -41,6 +41,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Core module: `src-tauri/src/core/drafts.rs` for draft creation, update, deletion, and auto-save logic
 - Core module: `src-tauri/src/core/attachments.rs` for attachment file operations, validation, and safety checks
 - Tauri commands: `mark_message_read`, `mark_message_unread`, `refresh_account`, `search_messages`
+- Tauri commands: `save_draft`, `get_drafts`, `delete_draft` for draft management
+- Tauri commands: `save_signature`, `get_signatures`, `delete_signature` for signature management
+- Tauri commands: `download_attachment` for attachment file download to user-specified location
+- Tauri commands: `get_messages_paginated`, `count_messages_in_folder` for pagination support
 - Tauri feature flags: `dialog-all`, `fs-all`, `path-all` for file system and dialog operations
 - Tauri allowlist configuration: dialog permissions (open, save) for file picker operations
 - Tauri allowlist configuration: fs permissions (readFile, writeFile) with scoped access to APPDATA, DOWNLOAD, DOCUMENT directories
@@ -48,9 +52,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 **Frontend Components:**
 - SearchBar component with debounced input (500ms delay) and clear button functionality
 - ComposeEmail component as modal dialog for email composition with form validation and error handling
+- DraftsList component for displaying saved drafts with edit and delete functionality
+- DraftEditor component as modal dialog for creating and editing email drafts with full form support
+- SignatureManager component for creating, editing, and managing email signatures with default signature designation
+- MessagePagination component with page size selector (25, 50, 100, 200) and navigation controls for handling large message lists
 - Context menu options in message list for manually marking messages as read or unread via right-click
 - Visual distinction between read and unread messages in message list with mail icon indicators and bold font for unread messages
 - Attachments display section in message view showing filename, MIME type, and file size for each attachment
+- Attachment download button in MessageView component with file save dialog integration using Tauri dialog API
 - Compose button in inbox header with Pencil icon for creating emails
 - Refresh button in inbox header with animated spinning icon during synchronization
 - Search bar integrated into message list pane header for quick email search
@@ -58,6 +67,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 **Frontend API & Store:**
 - Frontend API methods: `markMessageRead`, `markMessageUnread`, `refreshAccount`, `searchMessages` in services/api.ts
+- Frontend API methods: `saveDraft`, `getDrafts`, `deleteDraft` for draft management operations
+- Frontend API methods: `saveSignature`, `getSignatures`, `deleteSignature` for signature management operations
+- Frontend API methods: `downloadAttachment` for attachment download with file path parameter
+- Frontend API methods: `getMessagesPaginated`, `countMessagesInFolder` for paginated message retrieval
 - Store methods in mailboxStore for read status management (`markRead`, `markUnread`), account refresh (`refreshAccount`), and message search (`searchInMessages`)
 - Type definitions: `Draft`, `EmailSignature`, `AppSetting` interfaces in types/index.ts
 
@@ -70,6 +83,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 **Build & Development:**
 - Application icon files in all required formats (32x32.png, 128x128.png, 128x128@2x.png, icon.ico, icon.icns) for complete Tauri build support across all platforms (Windows, macOS, Linux)
 - Vitest configuration file (vitest.config.ts) for frontend unit testing setup with happy-dom environment
+- Test setup file (tests/frontend/setup.ts) with beforeAll, afterEach, and afterAll hooks for test environment initialization
+- Comprehensive frontend tests in tests/frontend/api.test.ts covering all API methods including drafts, signatures, attachments, and pagination
+- Comprehensive backend tests in tests/backend/database_tests.rs covering database operations, FTS5, pagination, drafts, and signatures
 - NPM scripts: `test`, `test:ui`, `test:coverage` for running frontend tests
 - Testing dependencies: vitest (^0.34.0), @testing-library/svelte (^4.0.0), @vitest/ui (^0.34.0), happy-dom (^12.0.0)
 
@@ -85,6 +101,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CRITICAL:** Fixed app.html to use SvelteKit placeholders (%sveltekit.head% and %sveltekit.body%) instead of vanilla Svelte structure
 - **CRITICAL:** Fixed missing `TlsStream` import in imap_sync.rs that caused compilation failure - added `use native_tls::TlsStream`
 - **CRITICAL:** Removed duplicate `TlsStream` import declaration in imap_sync.rs that appeared after ImapSync implementation
+- **CRITICAL:** Fixed AppState structure to use Arc-wrapped fields (Arc<Mutex<Connection>>, Arc<Mutex<Config>>) for proper thread-safe sharing across background sync and API handlers
 - **BUG:** Fixed deprecated `chrono::NaiveDateTime::from_timestamp` API call in export.rs - now uses `chrono::DateTime::from_timestamp` with proper error handling
 - **BUG:** Removed conflicting main.ts and App.svelte files that were incompatible with SvelteKit routing
 - **BUG:** Fixed AccountSwitcher component to properly handle Select onValueChange callback with type-safe value handling

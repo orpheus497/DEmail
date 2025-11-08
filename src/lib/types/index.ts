@@ -53,3 +53,30 @@ export interface OAuthProviderConfig {
   client_id: string;
   client_secret: string;
 }
+
+export interface Draft {
+  id: number;
+  account_id: number;
+  to_addresses: string;
+  cc_addresses: string | null;
+  bcc_addresses: string | null;
+  subject: string;
+  body_plain: string | null;
+  body_html: string | null;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface EmailSignature {
+  id: number;
+  account_id: number;
+  name: string;
+  content_html: string;
+  content_plain: string;
+  is_default: boolean;
+}
+
+export interface AppSetting {
+  key: string;
+  value: string;
+}
