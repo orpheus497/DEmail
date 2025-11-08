@@ -5,12 +5,14 @@
   import Input from "$lib/components/ui/input/index.svelte";
   import Label from "$lib/components/ui/label/index.svelte";
   import ThemeToggle from "$lib/components/ThemeToggle.svelte";
+  import SignatureManager from "$lib/components/SignatureManager.svelte";
   import {
     getOauthProviderConfigs,
     saveOauthProviderConfig,
     addAccount,
+    getAccounts,
   } from "$lib/services/api";
-  import type { OAuthProviderConfig } from "$lib/types";
+  import type { OAuthProviderConfig, Account } from "$lib/types";
   import { open } from "@tauri-apps/api/shell";
 
   let providerConfigs: Record<string, OAuthProviderConfig> = {
@@ -19,11 +21,19 @@
   };
   let emailToAdd = "";
   let saveStatus: string | null = null;
+  let accounts: Account[] = [];
+  let selectedAccountForSignatures: Account | null = null;
 
   onMount(async () => {
     try {
       const configs = await getOauthProviderConfigs();
       providerConfigs = { ...providerConfigs, ...configs };
+
+      // Load accounts for signature management
+      accounts = await getAccounts();
+      if (accounts.length > 0) {
+        selectedAccountForSignatures = accounts[0];
+      }
     } catch (e) {
       console.error("Failed to load configs:", e);
     }
@@ -159,5 +169,34 @@
         <Button on:click={handleAddAccount}>Add Account</Button>
       </div>
     </section>
+
+    <!-- Phase 6: Email Signatures -->
+    {#if accounts.length > 0}
+      <section>
+        <h2 class="text-xl font-semibold mb-4">Email Signatures</h2>
+        <p class="text-sm text-muted-foreground mb-4">
+          Manage email signatures for your accounts. Signatures will be automatically added to your emails.
+        </p>
+
+        {#if accounts.length > 1}
+          <div class="mb-4">
+            <Label for="account-select">Select Account</Label>
+            <select
+              id="account-select"
+              bind:value={selectedAccountForSignatures}
+              class="mt-1 w-full px-3 py-2 rounded-md border border-input bg-background"
+            >
+              {#each accounts as account}
+                <option value={account}>{account.email}</option>
+              {/each}
+            </select>
+          </div>
+        {/if}
+
+        {#if selectedAccountForSignatures}
+          <SignatureManager accountId={selectedAccountForSignatures.id} />
+        {/if}
+      </section>
+    {/if}
   </div>
 </div>
