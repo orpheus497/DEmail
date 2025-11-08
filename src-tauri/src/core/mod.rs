@@ -5,4 +5,5 @@ pub mod cache;
 pub mod config;
 pub mod drafts;
 pub mod export;
+pub mod reply_forward;
 pub mod sync;
