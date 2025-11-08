@@ -29,6 +29,8 @@ pub enum DEmailError {
     Auth(String),
     #[error("PDF generation error: {0}")]
     Pdf(String),
+    #[error("Validation error: {0}")]
+    Validation(String),
     #[error("Unknown error: {0}")]
     Unknown(String),
 }

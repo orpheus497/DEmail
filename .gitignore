@@ -114,3 +114,6 @@ src-tauri/Cargo.lock
 
 # Database file
 demail.sqlite
+
+# AI-generated documentation (per project hygiene requirements)
+.dev-docs/
