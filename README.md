@@ -10,12 +10,32 @@ This project was designed and originated by **orpheus497**.
 
 ## Features
 
-*   Connect to Google, Microsoft, and other email providers via OAuth 2.0.
-*   Securely stores your credentials in your operating system's native keyring.
-*   Full email client functionality: read, write, and manage your emails.
-*   Background sync service for real-time updates.
-*   **Data Export:** Archive your entire mailbox to your local machine in a human-readable format (PDF, HTML, TXT).
-*   Modern, responsive UI built with SvelteKit and `shadcn-svelte`.
+### Email Management
+*   Connect to Google, Microsoft, and other email providers via OAuth 2.0
+*   Full email client functionality: read, write, and manage your emails
+*   Draft management with auto-save functionality
+*   Email signatures with HTML and plain text support
+*   Full-text search across all emails using SQLite FTS5
+*   Read/unread message status tracking
+*   Message pagination for performance with large mailboxes
+*   Attachment viewing with file size and MIME type display
+
+### Security & Privacy
+*   Securely stores your credentials in your operating system's native keyring
+*   HTML email sanitization to prevent XSS attacks
+*   No telemetry or tracking - your data stays on your machine
+
+### Data Sovereignty
+*   **Data Export:** Archive your entire mailbox to your local machine in a human-readable format (PDF, HTML, TXT)
+*   All emails stored locally in SQLite database
+*   Complete control over your email data
+
+### User Experience
+*   Modern, responsive UI built with SvelteKit and `shadcn-svelte`
+*   Resizable 3-pane layout for comfortable email browsing
+*   Background sync service for keeping emails up-to-date
+*   Manual refresh for immediate synchronization
+*   Keyboard shortcuts and context menus for power users
 
 ## Configuration
 
@@ -55,6 +75,13 @@ This project is built with and relies on the following open-source software:
 | tailwindcss | Tailwind Labs | MIT |
 | lucide-svelte | Lucide contributors | ISC |
 | keyring | keyring-rs developers | MIT / Apache-2.0 |
+| mime_guess | Contributors | MIT |
+| regex | The Rust Project Developers | MIT / Apache-2.0 |
+| uuid | uuid-rs developers | MIT / Apache-2.0 |
+| vitest | Anthony Fu et al. | MIT |
+| @testing-library/svelte | Testing Library | MIT |
+| happy-dom | Capricorn86 | MIT |
+| paneforge | Huntabyte | MIT |
 
 ## Getting Started
 
@@ -109,6 +136,15 @@ sudo pacman -S webkit2gtk \
 1.  Install dependencies: `npm install`
 2.  Run the development server: `npm run tauri dev`
 3.  Build for production: `npm run tauri build`
+
+### Testing
+
+Run frontend tests:
+```bash
+npm test              # Run tests once
+npm run test:ui       # Run tests with UI
+npm run test:coverage # Generate coverage report
+```
 
 ## License
 
