@@ -1,16 +1,17 @@
 use crate::core::cache::db::{get_attachment_data, save_attachment_data};
 use crate::error::DEmailError;
 use crate::models::Attachment;
-use rusqlite::Connection;
+use r2d2::Pool;
+use r2d2_sqlite::SqliteConnectionManager;
 use std::fs;
 use std::path::Path;
 
 pub fn save_attachment_to_disk(
-    conn: &Connection,
+    pool: &Pool<SqliteConnectionManager>,
     attachment: &Attachment,
     destination_path: &str,
 ) -> Result<(), DEmailError> {
-    let data = get_attachment_data(conn, attachment.id)?
+    let data = get_attachment_data(pool, attachment.id)?
         .ok_or_else(|| DEmailError::NotFound(format!("Attachment data not found for ID {}", attachment.id)))?;
 
     fs::write(destination_path, data)?;
@@ -19,11 +20,11 @@ pub fn save_attachment_to_disk(
 }
 
 pub fn store_attachment_data(
-    conn: &Connection,
+    pool: &Pool<SqliteConnectionManager>,
     attachment_id: i64,
     data: Vec<u8>,
 ) -> Result<(), DEmailError> {
-    save_attachment_data(conn, attachment_id, &data)
+    save_attachment_data(pool, attachment_id, &data)
 }
 
 pub fn validate_attachment_safety(filename: &str, size_bytes: i64) -> Result<(), DEmailError> {

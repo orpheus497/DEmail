@@ -4,6 +4,7 @@
   import { createEventDispatcher } from "svelte";
   import Input from "$lib/components/ui/input/index.svelte";
   import Label from "$lib/components/ui/label/index.svelte";
+  import { mailbox } from "$lib/stores/mailboxStore";
 
   export let value: string = '';
   export let label: string;
@@ -27,8 +28,8 @@
       clearTimeout(searchTimeout);
     }
 
-    // Don't search if input is too short
-    if (value.length < 2) {
+    // Don't search if input is too short or no account selected
+    if (value.length < 2 || !$mailbox.selectedAccount) {
       suggestions = [];
       showSuggestions = false;
       return;
@@ -37,9 +38,11 @@
     // Debounce search
     searchTimeout = window.setTimeout(async () => {
       try {
-        suggestions = await searchContacts(value);
-        showSuggestions = suggestions.length > 0;
-        selectedIndex = -1;
+        if ($mailbox.selectedAccount) {
+          suggestions = await searchContacts($mailbox.selectedAccount.id, value);
+          showSuggestions = suggestions.length > 0;
+          selectedIndex = -1;
+        }
       } catch (error) {
         console.error('Failed to search contacts:', error);
         suggestions = [];

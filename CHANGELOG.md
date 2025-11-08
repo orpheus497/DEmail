@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Database functions: `get_messages_paginated`, `count_messages_in_folder` for pagination
 - Database functions: `update_message_read_status` for updating message read status
 - Database functions: `search_messages_fts` for FTS5-based full-text search
+- Database functions: `bulk_mark_unread`, `bulk_star_messages`, `bulk_unstar_messages` for bulk message operations supporting multiple messages simultaneously
 - FTS5 virtual table `messages_fts` with automatic sync triggers (insert, update, delete) for real-time search indexing
 
 **Backend Modules:**
@@ -49,6 +50,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tauri commands: `delete_message`, `move_message` for message management operations
 - Tauri commands: `save_setting`, `get_setting`, `get_all_settings` for application settings persistence
 - Tauri commands: `prepare_reply`, `prepare_forward` for generating reply and forward message templates
+- Tauri commands: `star_message`, `unstar_message`, `get_starred_messages` for message starring functionality
+- Tauri commands: `bulk_mark_unread`, `bulk_star_messages`, `bulk_unstar_messages` for bulk message operations
+- Tauri commands: `search_contacts`, `get_recent_contacts`, `get_frequent_contacts` for contact autocomplete functionality
+- Tauri commands: `get_thread_messages`, `get_thread` for email threading and conversation view support
 - Tauri feature flags: `dialog-all`, `fs-all`, `path-all` for file system and dialog operations
 - Tauri allowlist configuration: dialog permissions (open, save) for file picker operations
 - Tauri allowlist configuration: fs permissions (readFile, writeFile) with scoped access to APPDATA, DOWNLOAD, DOCUMENT directories
@@ -69,6 +74,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refresh button in inbox header with animated spinning icon during synchronization
 - Search bar integrated into message list pane header for quick email search
 - Resizable pane components using paneforge library for adjustable 3-pane email layout
+- ThreadView component integration in inbox page with keyboard shortcut 't' to toggle between message view and threaded conversation view
+- ContactAutocomplete component fully integrated in ComposeEmail for To, CC, and BCC fields with real-time contact search
+- ThemeToggle component integrated in inbox header for switching between light and dark modes with persistent settings storage
 
 **Frontend API & Store:**
 - Frontend API methods: `markMessageRead`, `markMessageUnread`, `refreshAccount`, `searchMessages` in services/api.ts
@@ -79,6 +87,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Frontend API methods: `deleteMessage`, `moveMessage` for message management operations
 - Frontend API methods: `saveSetting`, `getSetting`, `getAllSettings` for application settings management
 - Frontend API methods: `prepareReply`, `prepareForward` for generating reply and forward message data
+- Frontend API methods: `starMessage`, `unstarMessage`, `getStarredMessages` for message starring operations
+- Frontend API methods: `bulkMarkUnread`, `bulkStarMessages`, `bulkUnstarMessages` for bulk message operations
+- Frontend API methods: `searchContacts`, `getRecentContacts`, `getFrequentContacts` for contact management with proper accountId parameter passing
+- Frontend API methods: `getThreadMessages`, `getThread` for email threading functionality
 - Store methods in mailboxStore for read status management (`markRead`, `markUnread`), account refresh (`refreshAccount`), and message search (`searchInMessages`)
 - Store methods in mailboxStore for message operations (`deleteMessage`, `moveMessage`)
 - Type definitions: `Draft`, `EmailSignature`, `AppSetting` interfaces in types/index.ts
@@ -147,6 +159,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **BUG:** Fixed MessageView component to properly display HTML and plain text email bodies with fallback handling for empty content
 - **BUG:** Fixed routes structure - root route now redirects to /inbox
 - **BUG:** Corrected Settings page route structure - moved from /routes/Settings.svelte to /routes/settings/+page.svelte for proper SvelteKit routing
+- **CRITICAL:** Fixed attachments.rs to use r2d2 Pool instead of rusqlite Connection for thread-safe database access matching Phase 2 architecture
+- **CRITICAL:** Fixed background_sync.rs to use db_pool field instead of deprecated db_conn field in AppState structure
+- **BUG:** Fixed ContactAutocomplete component to pass accountId parameter to searchContacts API call for proper contact search functionality
+- **BUG:** Updated frontend contact API methods (searchContacts, getRecentContacts, getFrequentContacts) to include accountId parameter matching backend signatures
 
 ### Changed
 - **Dependencies:** Added paneforge (^0.0.6) to package.json for resizable panel functionality (corrected from ^0.2.0)

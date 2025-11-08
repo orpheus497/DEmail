@@ -8,11 +8,13 @@
   import FolderList from "$lib/components/FolderList.svelte";
   import MessageList from "$lib/components/MessageList.svelte";
   import MessageView from "$lib/components/MessageView.svelte";
+  import ThreadView from "$lib/components/ThreadView.svelte";
   import SearchBar from "$lib/components/SearchBar.svelte";
   import ComposeEmail from "$lib/components/ComposeEmail.svelte";
   import BulkActionToolbar from "$lib/components/BulkActionToolbar.svelte";
   import KeyboardShortcutsHelp from "$lib/components/KeyboardShortcutsHelp.svelte";
   import DraftsManager from "$lib/components/DraftsManager.svelte";
+  import ThemeToggle from "$lib/components/ThemeToggle.svelte";
   import type { Draft } from "$lib/types";
   import { Settings, Pencil, RefreshCw, HelpCircle, FileText } from "lucide-svelte";
 
@@ -23,6 +25,7 @@
   let refreshing = false;
   let showKeyboardHelp = false;
   let showDraftsManager = false;
+  let showThreadView = false;
   let messageListRef: MessageList;
   let searchBarRef: SearchBar;
   let selectedMessageIds: number[] = [];
@@ -213,6 +216,13 @@
         }, 10);
         break;
 
+      case 't':
+        event.preventDefault();
+        if ($mailbox.selectedMessage?.thread_id) {
+          showThreadView = !showThreadView;
+        }
+        break;
+
       case 'Escape':
         event.preventDefault();
         if (showKeyboardHelp) {
@@ -347,6 +357,7 @@
       >
         <HelpCircle class="h-4 w-4" />
       </Button>
+      <ThemeToggle />
       <Button variant="outline" size="sm" on:click={() => goto("/settings")}>
         <Settings class="h-4 w-4 mr-2" />
         Settings
@@ -399,7 +410,11 @@
 
       <Resizable.Pane defaultSize={50}>
         <div class="flex flex-col h-full">
-          <MessageView />
+          {#if showThreadView && $mailbox.selectedMessage?.thread_id}
+            <ThreadView threadId={$mailbox.selectedMessage.thread_id} />
+          {:else}
+            <MessageView />
+          {/if}
         </div>
       </Resizable.Pane>
     </Resizable.PaneGroup>

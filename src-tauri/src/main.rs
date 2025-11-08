@@ -76,6 +76,17 @@ fn main() {
             api::get_all_settings,
             api::prepare_reply,
             api::prepare_forward,
+            api::star_message,
+            api::unstar_message,
+            api::get_starred_messages,
+            api::bulk_mark_unread,
+            api::bulk_star_messages,
+            api::bulk_unstar_messages,
+            api::search_contacts,
+            api::get_recent_contacts,
+            api::get_frequent_contacts,
+            api::get_thread_messages,
+            api::get_thread,
         ])
         .build(context)
         .expect("error while building tauri application")

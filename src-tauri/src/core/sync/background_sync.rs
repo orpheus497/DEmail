@@ -23,8 +23,7 @@ pub fn start_background_sync(app_handle: AppHandle) {
 
 async fn sync_all_accounts(app_handle: AppHandle) -> Result<(), DEmailError> {
     let app_state = app_handle.state::<AppState>();
-    let conn = app_state.db_conn.lock().unwrap();
-    let accounts = get_accounts(&conn)?;
+    let accounts = get_accounts(&app_state.db_pool)?;
     let config = app_state.app_config.lock().unwrap();
     let configs = load_config(&config)?;
 
@@ -47,7 +46,7 @@ async fn sync_all_accounts(app_handle: AppHandle) -> Result<(), DEmailError> {
         };
 
         let app_state_arc = std::sync::Arc::new(AppState {
-            db_conn: app_state.db_conn.clone(),
+            db_pool: app_state.db_pool.clone(),
             app_config: app_state.app_config.clone(),
         });
 
