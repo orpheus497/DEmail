@@ -231,3 +231,81 @@ pub fn start_export(
 
     export_account(&conn, &account, &destination_path)
 }
+
+#[tauri::command]
+pub fn mark_message_read(app_handle: AppHandle, message_id: i64) -> Result<(), DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let conn = app_state.db_conn.lock().unwrap();
+    crate::core::cache::db::update_message_read_status(&conn, message_id, true)
+}
+
+#[tauri::command]
+pub fn mark_message_unread(app_handle: AppHandle, message_id: i64) -> Result<(), DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let conn = app_state.db_conn.lock().unwrap();
+    crate::core::cache::db::update_message_read_status(&conn, message_id, false)
+}
+
+#[tauri::command]
+pub async fn refresh_account(app_handle: AppHandle, account_id: i64) -> Result<(), DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let conn = app_state.db_conn.lock().unwrap();
+
+    let mut stmt = conn.prepare("SELECT provider_type, email_address FROM accounts WHERE id = ?1")?;
+    let (provider, email_address) = stmt.query_row([&account_id], |row| {
+        let provider: String = row.get(0)?;
+        let email: String = row.get(1)?;
+        Ok((provider, email))
+    })?;
+    drop(stmt);
+    drop(conn);
+
+    let app_config = app_state.app_config.lock().unwrap();
+    let configs = load_config(&app_config)?;
+    let provider_config = configs
+        .get(&provider)
+        .ok_or_else(|| DEmailError::Config(format!("OAuth config for {} not found", provider)))?;
+
+    let client = match provider.as_str() {
+        "google" => crate::core::auth::get_google_client(
+            provider_config.client_id.clone(),
+            provider_config.client_secret.clone(),
+        )?,
+        "microsoft" => crate::core::auth::get_microsoft_client(
+            provider_config.client_id.clone(),
+            provider_config.client_secret.clone(),
+        )?,
+        _ => {
+            return Err(DEmailError::Api(format!(
+                "Unsupported provider: {}",
+                provider
+            )))
+        }
+    };
+    drop(app_config);
+
+    let app_state_arc = std::sync::Arc::new(AppState {
+        db_conn: app_state.db_conn.clone(),
+        app_config: app_state.app_config.clone(),
+    });
+
+    crate::core::sync::imap_sync::sync_account_manually(
+        app_state_arc,
+        account_id,
+        &provider,
+        &client,
+        &email_address,
+    )
+    .await
+}
+
+#[tauri::command]
+pub fn search_messages(
+    app_handle: AppHandle,
+    account_id: i64,
+    query: String,
+) -> Result<Vec<crate::models::MessageHeader>, DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let conn = app_state.db_conn.lock().unwrap();
+    crate::core::cache::db::search_messages_fts(&conn, account_id, &query)
+}

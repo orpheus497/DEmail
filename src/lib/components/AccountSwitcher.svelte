@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import { mailbox } from "$lib/stores/mailboxStore";
   import * as Select from "$lib/components/ui/select";
-  import { Button } from "$lib/components/ui/button";
+  import Button from "$lib/components/ui/button/index.svelte";
   import { cn } from "$lib/utils";
 
   onMount(() => {

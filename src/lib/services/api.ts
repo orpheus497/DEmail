@@ -61,3 +61,22 @@ export const startExport = (
 ): Promise<void> => {
   return invoke('start_export', { accountId, destinationPath });
 };
+
+export const markMessageRead = (messageId: number): Promise<void> => {
+  return invoke('mark_message_read', { messageId });
+};
+
+export const markMessageUnread = (messageId: number): Promise<void> => {
+  return invoke('mark_message_unread', { messageId });
+};
+
+export const refreshAccount = (accountId: number): Promise<void> => {
+  return invoke('refresh_account', { accountId });
+};
+
+export const searchMessages = (
+  accountId: number,
+  query: string
+): Promise<MessageHeader[]> => {
+  return invoke('search_messages', { accountId, query });
+};

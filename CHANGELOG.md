@@ -8,6 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Full-text search functionality using SQLite FTS5 virtual table for searching across message subjects, senders, recipients, and body text
+- Email composition modal component with To, CC, Subject, and Body fields, including email validation and send functionality
+- Manual account refresh button in inbox header for triggering immediate IMAP synchronization
+- Read/unread message status management with automatic marking as read on message view
+- Context menu options in message list for manually marking messages as read or unread via right-click
+- Visual distinction between read and unread messages in message list with mail icon indicators and bold font for unread messages
+- Attachments display section in message view showing filename, MIME type, and file size for each attachment
+- SearchBar component with debounced input (500ms delay) and clear button functionality
+- ComposeEmail component as modal dialog for email composition with form validation and error handling
+- Tauri commands: `mark_message_read`, `mark_message_unread`, `refresh_account`, `search_messages`
+- Database functions: `update_message_read_status` for updating message read status, `search_messages_fts` for FTS5-based full-text search
+- Frontend API methods: `markMessageRead`, `markMessageUnread`, `refreshAccount`, `searchMessages` in services/api.ts
+- Store methods in mailboxStore for read status management (`markRead`, `markUnread`), account refresh (`refreshAccount`), and message search (`searchInMessages`)
+- FTS5 virtual table `messages_fts` with automatic sync triggers (insert, update, delete) for real-time search indexing
+- Compose button in inbox header with Pencil icon for creating emails
+- Refresh button in inbox header with animated spinning icon during synchronization
+- Search bar integrated into message list pane header for quick email search
 - Resizable pane components using paneforge library for adjustable 3-pane email layout
 - OAuth callback page at `/callback` route for handling authentication redirects
 - Inbox page at `/inbox` route with full 3-pane email client interface
@@ -16,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Application icon files in all required formats (32x32.png, 128x128.png, 128x128@2x.png, icon.ico, icon.icns) for complete Tauri build support across all platforms (Windows, macOS, Linux)
 
 ### Fixed
+- Corrected paneforge dependency version in package.json from non-existent ^0.2.0 to ^0.0.6 for Svelte 4 compatibility
 - **CRITICAL:** Removed triple-quote syntax artifacts from multiple Svelte and TypeScript component files that prevented compilation (api.ts, utils.ts, AccountSwitcher.svelte, FolderList.svelte, MessageList.svelte, MessageView.svelte, +page.svelte, Settings.svelte, +layout.svelte)
 - **CRITICAL:** Fixed undefined variable `folders` in imap_sync.rs fetch_folders function by adding proper Vec initialization
 - **CRITICAL:** Fixed app.html to use SvelteKit placeholders (%sveltekit.head% and %sveltekit.body%) instead of vanilla Svelte structure

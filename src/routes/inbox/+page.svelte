@@ -2,26 +2,76 @@
   import { onMount } from "svelte";
   import { goto } from "$app/navigation";
   import { mailbox } from "$lib/stores/mailboxStore";
-  import { Button } from "$lib/components/ui/button";
+  import Button from "$lib/components/ui/button/index.svelte";
   import * as Resizable from "$lib/components/ui/resizable";
   import AccountSwitcher from "$lib/components/AccountSwitcher.svelte";
   import FolderList from "$lib/components/FolderList.svelte";
   import MessageList from "$lib/components/MessageList.svelte";
   import MessageView from "$lib/components/MessageView.svelte";
-  import { Settings } from "lucide-svelte";
+  import SearchBar from "$lib/components/SearchBar.svelte";
+  import ComposeEmail from "$lib/components/ComposeEmail.svelte";
+  import { Settings, Pencil, RefreshCw } from "lucide-svelte";
+
+  let composeOpen = false;
+  let refreshing = false;
 
   onMount(() => {
     mailbox.fetchAccounts();
   });
+
+  function handleCompose() {
+    if ($mailbox.selectedAccount) {
+      composeOpen = true;
+    }
+  }
+
+  async function handleRefresh() {
+    if ($mailbox.selectedAccount && !refreshing) {
+      refreshing = true;
+      try {
+        await mailbox.refreshAccount();
+      } finally {
+        refreshing = false;
+      }
+    }
+  }
+
+  function handleSearch(event: CustomEvent<string>) {
+    mailbox.searchInMessages(event.detail);
+  }
+
+  function handleEmailSent() {
+    composeOpen = false;
+  }
 </script>
 
 <div class="h-screen flex flex-col">
   <header class="border-b p-4 flex items-center justify-between">
     <h1 class="text-2xl font-bold">DEmail</h1>
-    <Button variant="outline" size="sm" on:click={() => goto("/settings")}>
-      <Settings class="h-4 w-4 mr-2" />
-      Settings
-    </Button>
+    <div class="flex items-center gap-2">
+      <Button
+        variant="default"
+        size="sm"
+        on:click={handleCompose}
+        disabled={!$mailbox.selectedAccount}
+      >
+        <Pencil class="h-4 w-4 mr-2" />
+        Compose
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        on:click={handleRefresh}
+        disabled={!$mailbox.selectedAccount || refreshing}
+      >
+        <RefreshCw class="h-4 w-4 mr-2 {refreshing ? 'animate-spin' : ''}" />
+        Refresh
+      </Button>
+      <Button variant="outline" size="sm" on:click={() => goto("/settings")}>
+        <Settings class="h-4 w-4 mr-2" />
+        Settings
+      </Button>
+    </div>
   </header>
 
   {#if $mailbox.accounts.length === 0}
@@ -52,8 +102,9 @@
 
       <Resizable.Pane defaultSize={30} minSize={25} maxSize={50}>
         <div class="flex flex-col h-full border-r">
-          <div class="p-4 border-b">
+          <div class="p-4 border-b space-y-3">
             <h2 class="text-lg font-semibold">Messages</h2>
+            <SearchBar on:search={handleSearch} />
           </div>
           <div class="flex-1 overflow-auto">
             <MessageList />
@@ -75,5 +126,13 @@
     <div class="fixed bottom-4 right-4 p-4 bg-destructive text-destructive-foreground rounded-md shadow-lg max-w-md">
       Error: {$mailbox.error}
     </div>
+  {/if}
+
+  {#if $mailbox.selectedAccount}
+    <ComposeEmail
+      accountId={$mailbox.selectedAccount.id}
+      bind:open={composeOpen}
+      on:sent={handleEmailSent}
+    />
   {/if}
 </div>

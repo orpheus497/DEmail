@@ -76,3 +76,46 @@ pub fn save_attachment(conn: &Connection, attachment: &Attachment) -> Result<(),
     )?;
     Ok(())
 }
+
+pub fn update_message_read_status(
+    conn: &Connection,
+    message_id: i64,
+    is_read: bool,
+) -> Result<(), DEmailError> {
+    conn.execute(
+        "UPDATE messages SET is_read = ?1 WHERE id = ?2",
+        rusqlite::params![is_read, message_id],
+    )?;
+    Ok(())
+}
+
+pub fn search_messages_fts(
+    conn: &Connection,
+    account_id: i64,
+    query: &str,
+) -> Result<Vec<crate::models::MessageHeader>, DEmailError> {
+    let mut stmt = conn.prepare(
+        "SELECT m.id, m.subject, m.from_header, m.date, m.is_read, m.has_attachments
+         FROM messages m
+         INNER JOIN messages_fts fts ON m.id = fts.rowid
+         WHERE m.account_id = ?1 AND messages_fts MATCH ?2
+         ORDER BY m.date DESC",
+    )?;
+
+    let message_iter = stmt.query_map(rusqlite::params![account_id, query], |row| {
+        Ok(crate::models::MessageHeader {
+            id: row.get(0)?,
+            subject: row.get(1)?,
+            from: row.get(2)?,
+            date: row.get(3)?,
+            is_read: row.get(4)?,
+            has_attachments: row.get(5)?,
+        })
+    })?;
+
+    let mut messages = Vec::new();
+    for message in message_iter {
+        messages.push(message?);
+    }
+    Ok(messages)
+}
