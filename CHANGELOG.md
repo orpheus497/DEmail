@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Inbox page at `/inbox` route with full 3-pane email client interface
 - Index exports for Select UI component for proper module resolution
 - Improved Settings page with account addition functionality and status feedback
+- Application icon files in all required formats (32x32.png, 128x128.png, 128x128@2x.png, icon.ico, icon.icns) for complete Tauri build support across all platforms (Windows, macOS, Linux)
 
 ### Fixed
 - **CRITICAL:** Removed triple-quote syntax artifacts from multiple Svelte and TypeScript component files that prevented compilation (api.ts, utils.ts, AccountSwitcher.svelte, FolderList.svelte, MessageList.svelte, MessageView.svelte, +page.svelte, Settings.svelte, +layout.svelte)
@@ -23,7 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **BUG:** Fixed AccountSwitcher component to properly handle Select onValueChange callback with type-safe value handling
 - **BUG:** Fixed FolderList and MessageList components to use reactive mailbox store references directly
 - **BUG:** Fixed MessageView component to properly display HTML and plain text email bodies with fallback handling for empty content
-- **BUG:** Fixed routes structure - root route now redirects to /inbox, Settings moved to /settings route
+- **BUG:** Fixed routes structure - root route now redirects to /inbox
+- **BUG:** Corrected Settings page route structure - moved from /routes/Settings.svelte to /routes/settings/+page.svelte for proper SvelteKit routing
 
 ### Changed
 - **Dependencies:** Added paneforge (^0.2.0) to package.json for resizable panel functionality
