@@ -125,3 +125,39 @@ export const getMessagesPaginated = (
 export const countMessagesInFolder = (folderId: number): Promise<number> => {
   return invoke('count_messages_in_folder', { folderId });
 };
+
+export const deleteMessage = (messageId: number): Promise<void> => {
+  return invoke('delete_message', { messageId });
+};
+
+export const moveMessage = (messageId: number, targetFolderId: number): Promise<void> => {
+  return invoke('move_message', { messageId, targetFolderId });
+};
+
+export const saveSetting = (key: string, value: string): Promise<void> => {
+  return invoke('save_setting', { key, value });
+};
+
+export const getSetting = (key: string): Promise<string | null> => {
+  return invoke('get_setting', { key });
+};
+
+export const getAllSettings = (): Promise<{ key: string; value: string }[]> => {
+  return invoke('get_all_settings');
+};
+
+export const prepareReply = (messageId: number, replyAll: boolean): Promise<{
+  to: string;
+  cc: string | null;
+  subject: string;
+  quoted_body: string;
+}> => {
+  return invoke('prepare_reply', { messageId, replyAll });
+};
+
+export const prepareForward = (messageId: number): Promise<{
+  subject: string;
+  body_with_header: string;
+}> => {
+  return invoke('prepare_forward', { messageId });
+};

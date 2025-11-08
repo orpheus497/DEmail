@@ -65,6 +65,13 @@ fn main() {
             api::download_attachment,
             api::get_messages_paginated,
             api::count_messages_in_folder,
+            api::delete_message,
+            api::move_message,
+            api::save_setting,
+            api::get_setting,
+            api::get_all_settings,
+            api::prepare_reply,
+            api::prepare_forward,
         ])
         .build(context)
         .expect("error while building tauri application")

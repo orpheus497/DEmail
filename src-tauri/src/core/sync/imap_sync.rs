@@ -1,7 +1,7 @@
 use crate::core::accounts::get_refresh_token;
-use crate::core::cache::db::{save_folder, save_message};
+use crate::core::cache::db::{save_folder, save_message, save_attachment, save_attachment_data};
 use crate::error::DEmailError;
-use crate::models::{Folder, Message};
+use crate::models::{Attachment, Folder, Message};
 use imap::{
     types::{Fetch, Uid},
     Client, Session,
@@ -43,9 +43,9 @@ impl ImapSync {
 
         let access_token = token_result.access_token();
 
-        let (domain, user_email) = match provider {
-            "google" => ("imap.gmail.com", ""), // User email will be used
-            "microsoft" => ("outlook.office365.com", ""),
+        let domain = match provider {
+            "google" => "imap.gmail.com",
+            "microsoft" => "outlook.office365.com",
             _ => {
                 return Err(DEmailError::Imap(imap::Error::Parse(
                     "Unsupported provider",
@@ -126,7 +126,7 @@ impl ImapSync {
         for msg in fetch.iter() {
             if let Some(body) = msg.body() {
                 if let Ok(parsed_message) = ParsedMessage::parse(body) {
-                    let message = Message {
+                    let mut message = Message {
                         id: 0,
                         account_id,
                         folder_id: folder.id,
@@ -143,16 +143,50 @@ impl ImapSync {
                             .to()
                             .map(|t| t.to_string())
                             .unwrap_or_default(),
-                        cc_header: None,
+                        cc_header: parsed_message
+                            .cc()
+                            .map(|c| c.to_string()),
                         subject: parsed_message.subject().unwrap_or_default().to_string(),
                         date: parsed_message.date().map_or(0, |d| d.timestamp()),
                         body_plain: parsed_message.body_text(0).map(|s| s.to_string()),
                         body_html: parsed_message.body_html(0).map(|s| s.to_string()),
                         has_attachments: !parsed_message.attachments().is_empty(),
-                        is_read: false, // Will be updated later
+                        is_read: false,
                         attachments: Vec::new(),
                     };
                     save_message(&conn, &message)?;
+
+                    let message_id = conn.last_insert_rowid();
+                    message.id = message_id;
+
+                    for attachment in parsed_message.attachments() {
+                        let filename = attachment
+                            .attachment_name()
+                            .unwrap_or("unnamed_attachment")
+                            .to_string();
+                        let mime_type = attachment
+                            .content_type()
+                            .and_then(|ct| ct.ctype())
+                            .map(|t| t.to_string())
+                            .unwrap_or_else(|| "application/octet-stream".to_string());
+                        let content = attachment.contents();
+                        let size_bytes = content.len() as i64;
+
+                        let mut att = Attachment {
+                            id: 0,
+                            message_id,
+                            filename: filename.clone(),
+                            mime_type,
+                            size_bytes,
+                            local_path: None,
+                        };
+
+                        save_attachment(&conn, &att)?;
+                        let attachment_id = conn.last_insert_rowid();
+                        att.id = attachment_id;
+
+                        save_attachment_data(&conn, attachment_id, content)?;
+                    }
                 }
             }
         }

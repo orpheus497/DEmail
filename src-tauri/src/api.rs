@@ -123,7 +123,7 @@ pub fn get_message_details(
     let app_state = app_handle.state::<AppState>();
     let conn = app_state.db_conn.lock().unwrap();
     let mut stmt = conn.prepare("SELECT * FROM messages WHERE id = ?1")?;
-    let message = stmt.query_row([&message_id], |row| {
+    let mut message = stmt.query_row([&message_id], |row| {
         Ok(crate::models::Message {
             id: row.get(0)?,
             account_id: row.get(1)?,
@@ -139,9 +139,12 @@ pub fn get_message_details(
             body_html: row.get(12)?,
             has_attachments: row.get(13)?,
             is_read: row.get(14)?,
-            attachments: Vec::new(), // Will be loaded separately
+            attachments: Vec::new(),
         })
     })?;
+
+    message.attachments = crate::core::cache::db::get_attachments_for_message(&conn, message_id)?;
+
     Ok(message)
 }
 
@@ -208,7 +211,7 @@ pub async fn send_email(
 
     let access_token = token_result.access_token();
 
-    crate::core::sync::smtp_send::send_email(message, &provider, access_token).await
+    crate::core::sync::smtp_send::send_email(message, &provider, &email_address, access_token).await
 }
 
 #[tauri::command]
@@ -408,4 +411,68 @@ pub fn count_messages_in_folder(
     let app_state = app_handle.state::<AppState>();
     let conn = app_state.db_conn.lock().unwrap();
     crate::core::cache::db::count_messages_in_folder(&conn, folder_id)
+}
+
+#[tauri::command]
+pub fn delete_message(app_handle: AppHandle, message_id: i64) -> Result<(), DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let conn = app_state.db_conn.lock().unwrap();
+    crate::core::cache::db::delete_message(&conn, message_id)
+}
+
+#[tauri::command]
+pub fn move_message(
+    app_handle: AppHandle,
+    message_id: i64,
+    target_folder_id: i64,
+) -> Result<(), DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let conn = app_state.db_conn.lock().unwrap();
+    crate::core::cache::db::move_message(&conn, message_id, target_folder_id)
+}
+
+#[tauri::command]
+pub fn save_setting(
+    app_handle: AppHandle,
+    key: String,
+    value: String,
+) -> Result<(), DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let conn = app_state.db_conn.lock().unwrap();
+    crate::core::cache::db::save_setting(&conn, &key, &value)
+}
+
+#[tauri::command]
+pub fn get_setting(app_handle: AppHandle, key: String) -> Result<Option<String>, DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let conn = app_state.db_conn.lock().unwrap();
+    crate::core::cache::db::get_setting(&conn, &key)
+}
+
+#[tauri::command]
+pub fn get_all_settings(
+    app_handle: AppHandle,
+) -> Result<Vec<crate::models::AppSetting>, DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let conn = app_state.db_conn.lock().unwrap();
+    crate::core::cache::db::get_all_settings(&conn)
+}
+
+#[tauri::command]
+pub fn prepare_reply(
+    app_handle: AppHandle,
+    message_id: i64,
+    reply_all: bool,
+) -> Result<crate::core::reply_forward::ReplyData, DEmailError> {
+    let message = get_message_details(app_handle, message_id)?;
+    crate::core::reply_forward::prepare_reply(&message, reply_all)
+}
+
+#[tauri::command]
+pub fn prepare_forward(
+    app_handle: AppHandle,
+    message_id: i64,
+) -> Result<crate::core::reply_forward::ForwardData, DEmailError> {
+    let message = get_message_details(app_handle, message_id)?;
+    crate::core::reply_forward::prepare_forward(&message)
 }

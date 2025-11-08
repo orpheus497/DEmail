@@ -40,14 +40,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 **Backend Modules:**
 - Core module: `src-tauri/src/core/drafts.rs` for draft creation, update, deletion, and auto-save logic
 - Core module: `src-tauri/src/core/attachments.rs` for attachment file operations, validation, and safety checks
+- Core module: `src-tauri/src/core/reply_forward.rs` for email reply and forward message preparation with quoted body formatting
 - Tauri commands: `mark_message_read`, `mark_message_unread`, `refresh_account`, `search_messages`
 - Tauri commands: `save_draft`, `get_drafts`, `delete_draft` for draft management
 - Tauri commands: `save_signature`, `get_signatures`, `delete_signature` for signature management
 - Tauri commands: `download_attachment` for attachment file download to user-specified location
 - Tauri commands: `get_messages_paginated`, `count_messages_in_folder` for pagination support
+- Tauri commands: `delete_message`, `move_message` for message management operations
+- Tauri commands: `save_setting`, `get_setting`, `get_all_settings` for application settings persistence
+- Tauri commands: `prepare_reply`, `prepare_forward` for generating reply and forward message templates
 - Tauri feature flags: `dialog-all`, `fs-all`, `path-all` for file system and dialog operations
 - Tauri allowlist configuration: dialog permissions (open, save) for file picker operations
 - Tauri allowlist configuration: fs permissions (readFile, writeFile) with scoped access to APPDATA, DOWNLOAD, DOCUMENT directories
+- Database function: `get_attachments_for_message` for loading attachment metadata when viewing messages
 
 **Frontend Components:**
 - SearchBar component with debounced input (500ms delay) and clear button functionality
@@ -71,7 +76,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Frontend API methods: `saveSignature`, `getSignatures`, `deleteSignature` for signature management operations
 - Frontend API methods: `downloadAttachment` for attachment download with file path parameter
 - Frontend API methods: `getMessagesPaginated`, `countMessagesInFolder` for paginated message retrieval
+- Frontend API methods: `deleteMessage`, `moveMessage` for message management operations
+- Frontend API methods: `saveSetting`, `getSetting`, `getAllSettings` for application settings management
+- Frontend API methods: `prepareReply`, `prepareForward` for generating reply and forward message data
 - Store methods in mailboxStore for read status management (`markRead`, `markUnread`), account refresh (`refreshAccount`), and message search (`searchInMessages`)
+- Store methods in mailboxStore for message operations (`deleteMessage`, `moveMessage`)
 - Type definitions: `Draft`, `EmailSignature`, `AppSetting` interfaces in types/index.ts
 
 **Routing & Pages:**
@@ -102,6 +111,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CRITICAL:** Fixed missing `TlsStream` import in imap_sync.rs that caused compilation failure - added `use native_tls::TlsStream`
 - **CRITICAL:** Removed duplicate `TlsStream` import declaration in imap_sync.rs that appeared after ImapSync implementation
 - **CRITICAL:** Fixed AppState structure to use Arc-wrapped fields (Arc<Mutex<Connection>>, Arc<Mutex<Config>>) for proper thread-safe sharing across background sync and API handlers
+- **CRITICAL SECURITY:** HTML sanitization now actively implemented using ammonia crate in save_message function to prevent XSS attacks from malicious email HTML content
+- **CRITICAL:** IMAP authentication fixed - now passes actual user email address instead of empty string to login_with_oauth2 function
+- **CRITICAL:** SMTP authentication fixed - send_email function now receives and uses actual user email address for OAuth2 XOAUTH2 authentication
+- **CRITICAL:** Attachment data now properly saved during IMAP sync - parses mail-parser attachment objects, saves metadata to attachments table and binary data to attachment_data table
+- **CRITICAL:** Attachment loading implemented in get_message_details - now queries and returns actual attachment metadata instead of empty Vec
+- **CRITICAL:** CC header now properly extracted and saved from parsed email messages during IMAP sync
 - **BUG:** Fixed deprecated `chrono::NaiveDateTime::from_timestamp` API call in export.rs - now uses `chrono::DateTime::from_timestamp` with proper error handling
 - **BUG:** Removed conflicting main.ts and App.svelte files that were incompatible with SvelteKit routing
 - **BUG:** Fixed AccountSwitcher component to properly handle Select onValueChange callback with type-safe value handling
@@ -113,6 +128,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **Dependencies:** Added paneforge (^0.0.6) to package.json for resizable panel functionality (corrected from ^0.2.0)
 - **Dependencies:** Added testing framework dependencies: vitest, @testing-library/svelte, @vitest/ui, happy-dom for comprehensive frontend testing
+- **Dependencies:** Removed unused Rust crates from Cargo.toml: sha2, base64, rand, url, anyhow, regex for reduced binary size
 - **Dependencies:** Added Rust crates: mime_guess, regex, uuid for enhanced functionality
 - **Dependencies:** Updated Tauri feature flags to include dialog-all, fs-all, path-all for file system operations
 - **Architecture:** Refactored routing to use proper SvelteKit page structure with dedicated inbox and settings routes

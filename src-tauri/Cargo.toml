@@ -28,18 +28,12 @@ tokio = { version = "1", features = ["full"] }
 mail-parser = "0.8.1"
 keyring = "2.0.2"
 chrono = { version = "0.4", features = ["serde"] }
-sha2 = "0.10.6"
-base64 = "0.21.4"
-rand = "0.8.5"
-url = "2.4.0"
 log = "0.4.17"
 env_logger = "0.10.0"
 thiserror = "1.0.40"
-anyhow = "1.0.71"
 ammonia = "3.3.0"
 headless_chrome = { version = "1.0.5", features = ["fetch"] }
 mime_guess = "2.0"
-regex = "1.10"
 uuid = { version = "1.6", features = ["v4", "serde"] }
 
 [features]

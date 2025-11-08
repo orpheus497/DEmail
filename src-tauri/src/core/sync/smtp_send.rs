@@ -10,11 +10,12 @@ use oauth2::{
 pub async fn send_email(
     message: Message,
     provider: &str,
+    user_email: &str,
     access_token: &AccessToken,
 ) -> Result<(), DEmailError> {
-    let (smtp_server, smtp_user) = match provider {
-        "google" => ("smtp.gmail.com", ""), // User email will be used
-        "microsoft" => ("smtp.office365.com", ""),
+    let smtp_server = match provider {
+        "google" => "smtp.gmail.com",
+        "microsoft" => "smtp.office365.com",
         _ => {
             return Err(DEmailError::Smtp(lettre::transport::smtp::Error::from(
                 "Unsupported provider".to_string(),
@@ -25,7 +26,7 @@ pub async fn send_email(
     let mailer = AsyncSmtpTransport::<tokio::io::DuplexStream>::starttls_relay(smtp_server)
         .map_err(|e| DEmailError::Smtp(e))?
         .credentials(lettre::transport::smtp::authentication::Credentials::new(
-            smtp_user.to_string(),
+            user_email.to_string(),
             access_token.secret().to_string(),
         ))
         .authentication(vec![Mechanism::XOAuth2])

@@ -5,6 +5,7 @@ use std::fs;
 use std::path::PathBuf;
 use tauri::api::path::app_data_dir;
 use tauri::Config;
+use ammonia;
 
 use crate::models::{Attachment, Draft, EmailSignature, Folder, Message, AppSetting};
 
@@ -40,7 +41,13 @@ pub fn save_folder(conn: &Connection, folder: &mut Folder) -> Result<(), DEmailE
     Ok(())
 }
 
+fn sanitize_html(html: &Option<String>) -> Option<String> {
+    html.as_ref().map(|h| ammonia::clean(h))
+}
+
 pub fn save_message(conn: &Connection, message: &Message) -> Result<(), DEmailError> {
+    let sanitized_html = sanitize_html(&message.body_html);
+
     conn.execute(
         "INSERT OR REPLACE INTO messages (id, account_id, folder_id, imap_uid, message_id_header, from_header, to_header, cc_header, subject, date, body_plain, body_html, has_attachments, is_read) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
         rusqlite::params![
@@ -55,7 +62,7 @@ pub fn save_message(conn: &Connection, message: &Message) -> Result<(), DEmailEr
             message.subject,
             message.date,
             message.body_plain,
-            message.body_html,
+            sanitized_html,
             message.has_attachments,
             message.is_read,
         ],
@@ -368,4 +375,28 @@ pub fn count_messages_in_folder(conn: &Connection, folder_id: i64) -> Result<i64
         |row| row.get(0)
     )?;
     Ok(count)
+}
+
+pub fn get_attachments_for_message(conn: &Connection, message_id: i64) -> Result<Vec<Attachment>, DEmailError> {
+    let mut stmt = conn.prepare(
+        "SELECT id, message_id, filename, mime_type, size_bytes, local_path
+         FROM attachments WHERE message_id = ?1"
+    )?;
+
+    let attachment_iter = stmt.query_map([message_id], |row| {
+        Ok(Attachment {
+            id: row.get(0)?,
+            message_id: row.get(1)?,
+            filename: row.get(2)?,
+            mime_type: row.get(3)?,
+            size_bytes: row.get(4)?,
+            local_path: row.get(5)?,
+        })
+    })?;
+
+    let mut attachments = Vec::new();
+    for attachment in attachment_iter {
+        attachments.push(attachment?);
+    }
+    Ok(attachments)
 }

@@ -208,6 +208,42 @@ const createMailboxStore = () => {
     }
   };
 
+  const deleteMessage = async (messageId: number) => {
+    try {
+      await import('../services/api').then(api => api.deleteMessage(messageId));
+      update((state) => {
+        const updatedMessages = state.messages.filter((msg) => msg.id !== messageId);
+        const updatedSelectedMessage =
+          state.selectedMessage?.id === messageId ? null : state.selectedMessage;
+        return {
+          ...state,
+          messages: updatedMessages,
+          selectedMessage: updatedSelectedMessage,
+        };
+      });
+    } catch (error) {
+      update((state) => ({ ...state, error: String(error) }));
+    }
+  };
+
+  const moveMessage = async (messageId: number, targetFolderId: number) => {
+    try {
+      await import('../services/api').then(api => api.moveMessage(messageId, targetFolderId));
+      update((state) => {
+        const updatedMessages = state.messages.filter((msg) => msg.id !== messageId);
+        const updatedSelectedMessage =
+          state.selectedMessage?.id === messageId ? null : state.selectedMessage;
+        return {
+          ...state,
+          messages: updatedMessages,
+          selectedMessage: updatedSelectedMessage,
+        };
+      });
+    } catch (error) {
+      update((state) => ({ ...state, error: String(error) }));
+    }
+  };
+
   return {
     subscribe,
     fetchAccounts,
@@ -218,6 +254,8 @@ const createMailboxStore = () => {
     markUnread,
     refreshAccount,
     searchInMessages,
+    deleteMessage,
+    moveMessage,
   };
 };
 
