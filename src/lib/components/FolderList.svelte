@@ -1,22 +1,19 @@
-'''<script lang="ts">
+<script lang="ts">
   import { mailbox } from "$lib/stores/mailboxStore";
   import type { Folder } from "$lib/types";
-
-  let folders = mailbox.folders;
 
   function handleFolderSelect(folder: Folder) {
     mailbox.selectFolder(folder);
   }
 </script>
 
-<div class="flex flex-col gap-2">
-  {#each $folders as folder}
+<div class="flex flex-col gap-1">
+  {#each $mailbox.folders as folder}
     <button
-      class="flex items-center gap-2 rounded-md p-2 text-sm font-medium hover:bg-muted"
+      class="flex items-center gap-2 rounded-md p-2 text-sm font-medium hover:bg-accent text-left transition-colors {$mailbox.selectedFolder?.id === folder.id ? 'bg-accent' : ''}"
       on:click={() => handleFolderSelect(folder)}
     >
       <span>{folder.name}</span>
     </button>
   {/each}
 </div>
-''
