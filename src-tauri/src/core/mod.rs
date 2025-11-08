@@ -11,3 +11,6 @@ pub mod reply_forward;
 pub mod sync;
 pub mod threading;
 pub mod validation;
+
+#[cfg(test)]
+mod validation_tests;

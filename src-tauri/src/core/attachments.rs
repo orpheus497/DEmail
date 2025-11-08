@@ -14,7 +14,7 @@ pub fn save_attachment_to_disk(
         .ok_or_else(|| DEmailError::NotFound(format!("Attachment data not found for ID {}", attachment.id)))?;
 
     fs::write(destination_path, data)?;
-    log::info!("Attachment saved to: {}", destination_path);
+    tracing::info!("Attachment saved to: {}", destination_path);
     Ok(())
 }
 
@@ -46,7 +46,7 @@ pub fn validate_attachment_safety(filename: &str, size_bytes: i64) -> Result<(),
     ];
 
     if DANGEROUS_EXTENSIONS.contains(&extension.to_lowercase().as_str()) {
-        log::warn!("Potentially dangerous attachment type: {}", extension);
+        tracing::warn!("Potentially dangerous attachment type: {}", extension);
     }
 
     Ok(())

@@ -1,4 +1,5 @@
 use crate::core::accounts::{create_account, store_refresh_token};
+use crate::core::cache::db;
 use crate::core::config::load_config;
 use crate::error::DEmailError;
 use crate::models::Account;
@@ -8,13 +9,12 @@ use oauth2::{
     AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, PkceCodeChallenge,
     PkceCodeVerifier, RedirectUrl, Scope, TokenResponse, TokenUrl,
 };
-use rusqlite::Connection;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tauri::{AppHandle, Config, Manager, State};
 
 pub struct AppState {
-    pub db_conn: Arc<std::sync::Mutex<Connection>>,
+    pub db_pool: Arc<db::Pool>,
     pub app_config: Arc<std::sync::Mutex<Config>>,
 }
 
@@ -205,9 +205,9 @@ pub async fn handle_oauth_callback(
     };
 
     let app_state = app_handle.state::<AppState>();
-    let conn = app_state.db_conn.lock().unwrap();
+    let pool = &app_state.db_pool;
 
-    let account = create_account(&conn, &email_address, &display_name, &oauth_state.provider)?;
+    let account = create_account(pool, &email_address, &display_name, &oauth_state.provider)?;
 
     store_refresh_token(account.id, refresh_token.secret())?;
 

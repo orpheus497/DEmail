@@ -113,6 +113,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Code quality tooling: .prettierrc for code formatting, .eslintrc.json for linting rules, rustfmt.toml for Rust code style
 - NPM scripts: `format`, `lint`, `lint:fix` for automated code quality checks
 - Build configuration: .gitignore updated to exclude .dev-docs directory per project hygiene requirements
+- **Phase 2 Implementation:** Database connection pooling using r2d2 (0.8.10) and r2d2_sqlite (0.24.0) for non-blocking multi-threaded database access with max 15 connections
+- **Phase 2 Implementation:** Structured logging system using tracing (0.1.40) and tracing-subscriber (0.3.18) replacing env_logger for thread-aware diagnostic logging
+- **Phase 2 Implementation:** Comprehensive input validation on all API endpoints preventing SQL injection, XSS, and path traversal attacks
+- **Phase 2 Implementation:** Message starring functionality with backend support (star_message, unstar_message, get_starred_messages functions in db.rs)
+- **Phase 2 Implementation:** Bulk operations support (bulk_mark_read, bulk_delete_messages functions in db.rs) for multi-message management
+- **Phase 2 Implementation:** Threading and contacts integration stubs in IMAP sync for Phase 3 full implementation
+- **Phase 2 Implementation:** Validation test suite (validation_tests.rs) with 10+ comprehensive integration tests covering edge cases, Unicode support, and security scenarios
+- **Phase 2 Implementation:** Updated Message and MessageHeader models to include is_starred and thread_id fields for starring and conversation threading support
 
 ### Fixed
 - **CRITICAL BUILD:** Fixed SvelteKit adapter configuration - added fallback: 'index.html' to adapter-static for proper SPA mode enabling production builds for Tauri desktop application
@@ -166,6 +174,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Architecture:** Added core modules for drafts and attachments management in backend
 - **Architecture:** Added validation, migrations, threading, and contacts modules to core backend architecture
 - **Architecture:** Implemented comprehensive database indexing strategy for performance optimization with indexes on is_starred, thread_id, subject_hash, and contact lookup fields
+- **Architecture (Phase 2):** Migrated from single Connection to r2d2 Pool throughout entire backend (db.rs, api.rs, auth.rs, accounts.rs, drafts.rs, imap_sync.rs, export.rs)
+- **Architecture (Phase 2):** Refactored AppState to use Arc<Pool> instead of Arc<Mutex<Connection>> for thread-safe non-blocking database access
+- **Architecture (Phase 2):** All database operations now use connection pool pattern with proper error handling and automatic connection management
+- **Architecture (Phase 2):** All API command handlers now include comprehensive input validation before processing user data
 - **UI:** Simplified +layout.svelte to minimal layout wrapper, moved 3-pane UI to dedicated inbox page
 - **UI:** Improved MessageList with empty state handling and read/unread visual distinction
 - **UI:** Improved MessageView with better header layout, content display, and overflow handling

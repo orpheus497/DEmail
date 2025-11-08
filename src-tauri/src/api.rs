@@ -2,6 +2,7 @@ use crate::core::accounts::{create_account, delete_account, get_accounts};
 use crate::core::auth::{handle_oauth_callback, start_oauth_flow, AppState, OAuth2StateMap};
 use crate::core::config::{load_config, save_config};
 use crate::core::export::export_account;
+use crate::core::validation;
 use crate::error::DEmailError;
 use crate::models::{Account, OAuthProviderConfig};
 use std::collections::HashMap;
@@ -12,6 +13,7 @@ pub async fn add_account(
     app_handle: AppHandle,
     email_address: String,
 ) -> Result<String, DEmailError> {
+    validation::validate_email(&email_address)?;
     start_oauth_flow(app_handle, email_address).await
 }
 
@@ -27,15 +29,15 @@ pub async fn handle_callback(
 #[tauri::command]
 pub fn get_accounts(app_handle: AppHandle) -> Result<Vec<Account>, DEmailError> {
     let app_state = app_handle.state::<AppState>();
-    let conn = app_state.db_conn.lock().unwrap();
-    get_accounts(&conn)
+    let pool = &app_state.db_pool;
+    get_accounts(pool)
 }
 
 #[tauri::command]
 pub fn delete_account(app_handle: AppHandle, account_id: i64) -> Result<(), DEmailError> {
     let app_state = app_handle.state::<AppState>();
-    let conn = app_state.db_conn.lock().unwrap();
-    delete_account(&conn, account_id)
+    let pool = &app_state.db_pool;
+    delete_account(pool, account_id)
 }
 
 #[tauri::command]
@@ -66,7 +68,11 @@ pub fn get_folders(
     account_id: i64,
 ) -> Result<Vec<crate::models::Folder>, DEmailError> {
     let app_state = app_handle.state::<AppState>();
-    let conn = app_state.db_conn.lock().unwrap();
+    let pool = &app_state.db_pool;
+    let conn = pool.get().map_err(|_| {
+        DEmailError::Database(rusqlite::Error::InvalidQuery)
+    })?;
+
     let mut stmt = conn.prepare(
         "SELECT id, account_id, name, path, parent_id FROM folders WHERE account_id = ?1",
     )?;
@@ -93,9 +99,13 @@ pub fn get_messages(
     folder_id: i64,
 ) -> Result<Vec<crate::models::MessageHeader>, DEmailError> {
     let app_state = app_handle.state::<AppState>();
-    let conn = app_state.db_conn.lock().unwrap();
+    let pool = &app_state.db_pool;
+    let conn = pool.get().map_err(|_| {
+        DEmailError::Database(rusqlite::Error::InvalidQuery)
+    })?;
+
     let mut stmt = conn.prepare(
-        "SELECT id, subject, from_header, date, is_read, has_attachments FROM messages WHERE folder_id = ?1 ORDER BY date DESC",
+        "SELECT id, subject, from_header, date, is_read, has_attachments, is_starred FROM messages WHERE folder_id = ?1 ORDER BY date DESC",
     )?;
     let message_iter = stmt.query_map([&folder_id], |row| {
         Ok(crate::models::MessageHeader {
@@ -105,6 +115,7 @@ pub fn get_messages(
             date: row.get(3)?,
             is_read: row.get(4)?,
             has_attachments: row.get(5)?,
+            is_starred: row.get(6)?,
         })
     })?;
 
@@ -121,8 +132,17 @@ pub fn get_message_details(
     message_id: i64,
 ) -> Result<crate::models::Message, DEmailError> {
     let app_state = app_handle.state::<AppState>();
-    let conn = app_state.db_conn.lock().unwrap();
-    let mut stmt = conn.prepare("SELECT * FROM messages WHERE id = ?1")?;
+    let pool = &app_state.db_pool;
+    let conn = pool.get().map_err(|_| {
+        DEmailError::Database(rusqlite::Error::InvalidQuery)
+    })?;
+
+    let mut stmt = conn.prepare(
+        "SELECT id, account_id, folder_id, imap_uid, message_id_header, in_reply_to_header,
+         from_header, to_header, cc_header, subject, date, body_plain, body_html,
+         has_attachments, is_read, is_starred, thread_id
+         FROM messages WHERE id = ?1"
+    )?;
     let mut message = stmt.query_row([&message_id], |row| {
         Ok(crate::models::Message {
             id: row.get(0)?,
@@ -139,11 +159,13 @@ pub fn get_message_details(
             body_html: row.get(12)?,
             has_attachments: row.get(13)?,
             is_read: row.get(14)?,
+            is_starred: row.get(15)?,
+            thread_id: row.get(16)?,
             attachments: Vec::new(),
         })
     })?;
 
-    message.attachments = crate::core::cache::db::get_attachments_for_message(&conn, message_id)?;
+    message.attachments = crate::core::cache::db::get_attachments_for_message(pool, message_id)?;
 
     Ok(message)
 }
@@ -159,8 +181,17 @@ pub async fn send_email(
     subject: String,
     body: String,
 ) -> Result<(), DEmailError> {
+    // Validate inputs
+    validation::validate_email(&to)?;
+    validation::validate_subject(&subject)?;
+    validation::validate_body(&body)?;
+
     let app_state = app_handle.state::<AppState>();
-    let conn = app_state.db_conn.lock().unwrap();
+    let pool = &app_state.db_pool;
+    let conn = pool.get().map_err(|_| {
+        DEmailError::Database(rusqlite::Error::InvalidQuery)
+    })?;
+
     let mut stmt =
         conn.prepare("SELECT provider_type, email_address FROM accounts WHERE id = ?1")?;
     let (provider, email_address) = stmt.query_row([&account_id], |row| {
@@ -221,7 +252,11 @@ pub fn start_export(
     destination_path: String,
 ) -> Result<(), DEmailError> {
     let app_state = app_handle.state::<AppState>();
-    let conn = app_state.db_conn.lock().unwrap();
+    let pool = &app_state.db_pool;
+    let conn = pool.get().map_err(|_| {
+        DEmailError::Database(rusqlite::Error::InvalidQuery)
+    })?;
+
     let mut stmt = conn.prepare("SELECT * FROM accounts WHERE id = ?1")?;
     let account = stmt.query_row([&account_id], |row| {
         Ok(Account {
@@ -238,21 +273,24 @@ pub fn start_export(
 #[tauri::command]
 pub fn mark_message_read(app_handle: AppHandle, message_id: i64) -> Result<(), DEmailError> {
     let app_state = app_handle.state::<AppState>();
-    let conn = app_state.db_conn.lock().unwrap();
-    crate::core::cache::db::update_message_read_status(&conn, message_id, true)
+    let pool = &app_state.db_pool;
+    crate::core::cache::db::update_message_read_status(pool, message_id, true)
 }
 
 #[tauri::command]
 pub fn mark_message_unread(app_handle: AppHandle, message_id: i64) -> Result<(), DEmailError> {
     let app_state = app_handle.state::<AppState>();
-    let conn = app_state.db_conn.lock().unwrap();
-    crate::core::cache::db::update_message_read_status(&conn, message_id, false)
+    let pool = &app_state.db_pool;
+    crate::core::cache::db::update_message_read_status(pool, message_id, false)
 }
 
 #[tauri::command]
 pub async fn refresh_account(app_handle: AppHandle, account_id: i64) -> Result<(), DEmailError> {
     let app_state = app_handle.state::<AppState>();
-    let conn = app_state.db_conn.lock().unwrap();
+    let pool = &app_state.db_pool;
+    let conn = pool.get().map_err(|_| {
+        DEmailError::Database(rusqlite::Error::InvalidQuery)
+    })?;
 
     let mut stmt = conn.prepare("SELECT provider_type, email_address FROM accounts WHERE id = ?1")?;
     let (provider, email_address) = stmt.query_row([&account_id], |row| {
@@ -288,7 +326,7 @@ pub async fn refresh_account(app_handle: AppHandle, account_id: i64) -> Result<(
     drop(app_config);
 
     let app_state_arc = std::sync::Arc::new(AppState {
-        db_conn: app_state.db_conn.clone(),
+        db_pool: app_state.db_pool.clone(),
         app_config: app_state.app_config.clone(),
     });
 
@@ -308,9 +346,11 @@ pub fn search_messages(
     account_id: i64,
     query: String,
 ) -> Result<Vec<crate::models::MessageHeader>, DEmailError> {
+    validation::validate_search_query(&query)?;
+
     let app_state = app_handle.state::<AppState>();
-    let conn = app_state.db_conn.lock().unwrap();
-    crate::core::cache::db::search_messages_fts(&conn, account_id, &query)
+    let pool = &app_state.db_pool;
+    crate::core::cache::db::search_messages_fts(pool, account_id, &query)
 }
 
 #[tauri::command]
@@ -318,9 +358,18 @@ pub fn save_draft(
     app_handle: AppHandle,
     draft: crate::models::Draft,
 ) -> Result<i64, DEmailError> {
+    // Validate draft fields
+    validation::validate_subject(&draft.subject)?;
+    if let Some(ref body) = draft.body_plain {
+        validation::validate_body(body)?;
+    }
+    if let Some(ref body) = draft.body_html {
+        validation::validate_body(body)?;
+    }
+
     let app_state = app_handle.state::<AppState>();
-    let conn = app_state.db_conn.lock().unwrap();
-    crate::core::drafts::create_or_update_draft(&conn, &draft)
+    let pool = &app_state.db_pool;
+    crate::core::drafts::create_or_update_draft(pool, &draft)
 }
 
 #[tauri::command]
@@ -329,15 +378,15 @@ pub fn get_drafts(
     account_id: i64,
 ) -> Result<Vec<crate::models::Draft>, DEmailError> {
     let app_state = app_handle.state::<AppState>();
-    let conn = app_state.db_conn.lock().unwrap();
-    crate::core::drafts::load_drafts_for_account(&conn, account_id)
+    let pool = &app_state.db_pool;
+    crate::core::drafts::load_drafts_for_account(pool, account_id)
 }
 
 #[tauri::command]
 pub fn delete_draft(app_handle: AppHandle, draft_id: i64) -> Result<(), DEmailError> {
     let app_state = app_handle.state::<AppState>();
-    let conn = app_state.db_conn.lock().unwrap();
-    crate::core::drafts::remove_draft(&conn, draft_id)
+    let pool = &app_state.db_pool;
+    crate::core::drafts::remove_draft(pool, draft_id)
 }
 
 #[tauri::command]
@@ -346,8 +395,8 @@ pub fn save_signature(
     signature: crate::models::EmailSignature,
 ) -> Result<i64, DEmailError> {
     let app_state = app_handle.state::<AppState>();
-    let conn = app_state.db_conn.lock().unwrap();
-    crate::core::cache::db::save_signature(&conn, &signature)
+    let pool = &app_state.db_pool;
+    crate::core::cache::db::save_signature(pool, &signature)
 }
 
 #[tauri::command]
@@ -356,15 +405,15 @@ pub fn get_signatures(
     account_id: i64,
 ) -> Result<Vec<crate::models::EmailSignature>, DEmailError> {
     let app_state = app_handle.state::<AppState>();
-    let conn = app_state.db_conn.lock().unwrap();
-    crate::core::cache::db::get_signatures(&conn, account_id)
+    let pool = &app_state.db_pool;
+    crate::core::cache::db::get_signatures(pool, account_id)
 }
 
 #[tauri::command]
 pub fn delete_signature(app_handle: AppHandle, signature_id: i64) -> Result<(), DEmailError> {
     let app_state = app_handle.state::<AppState>();
-    let conn = app_state.db_conn.lock().unwrap();
-    crate::core::cache::db::delete_signature(&conn, signature_id)
+    let pool = &app_state.db_pool;
+    crate::core::cache::db::delete_signature(pool, signature_id)
 }
 
 #[tauri::command]
@@ -373,8 +422,17 @@ pub fn download_attachment(
     attachment_id: i64,
     destination_path: String,
 ) -> Result<(), DEmailError> {
+    // Validate destination path
+    let dest_path = std::path::Path::new(&destination_path);
+    validation::sanitize_filename(dest_path.file_name()
+        .and_then(|n| n.to_str())
+        .ok_or_else(|| DEmailError::Validation("Invalid destination path".to_string()))?)?;
+
     let app_state = app_handle.state::<AppState>();
-    let conn = app_state.db_conn.lock().unwrap();
+    let pool = &app_state.db_pool;
+    let conn = pool.get().map_err(|_| {
+        DEmailError::Database(rusqlite::Error::InvalidQuery)
+    })?;
 
     let mut stmt = conn.prepare("SELECT * FROM attachments WHERE id = ?1")?;
     let attachment = stmt.query_row([attachment_id], |row| {
@@ -398,9 +456,11 @@ pub fn get_messages_paginated(
     limit: i64,
     offset: i64,
 ) -> Result<Vec<crate::models::MessageHeader>, DEmailError> {
+    validation::validate_pagination(limit, offset)?;
+
     let app_state = app_handle.state::<AppState>();
-    let conn = app_state.db_conn.lock().unwrap();
-    crate::core::cache::db::get_messages_paginated(&conn, folder_id, limit, offset)
+    let pool = &app_state.db_pool;
+    crate::core::cache::db::get_messages_paginated(pool, folder_id, limit, offset)
 }
 
 #[tauri::command]
@@ -409,15 +469,15 @@ pub fn count_messages_in_folder(
     folder_id: i64,
 ) -> Result<i64, DEmailError> {
     let app_state = app_handle.state::<AppState>();
-    let conn = app_state.db_conn.lock().unwrap();
-    crate::core::cache::db::count_messages_in_folder(&conn, folder_id)
+    let pool = &app_state.db_pool;
+    crate::core::cache::db::count_messages_in_folder(pool, folder_id)
 }
 
 #[tauri::command]
 pub fn delete_message(app_handle: AppHandle, message_id: i64) -> Result<(), DEmailError> {
     let app_state = app_handle.state::<AppState>();
-    let conn = app_state.db_conn.lock().unwrap();
-    crate::core::cache::db::delete_message(&conn, message_id)
+    let pool = &app_state.db_pool;
+    crate::core::cache::db::delete_message(pool, message_id)
 }
 
 #[tauri::command]
@@ -427,8 +487,8 @@ pub fn move_message(
     target_folder_id: i64,
 ) -> Result<(), DEmailError> {
     let app_state = app_handle.state::<AppState>();
-    let conn = app_state.db_conn.lock().unwrap();
-    crate::core::cache::db::move_message(&conn, message_id, target_folder_id)
+    let pool = &app_state.db_pool;
+    crate::core::cache::db::move_message(pool, message_id, target_folder_id)
 }
 
 #[tauri::command]
@@ -438,15 +498,15 @@ pub fn save_setting(
     value: String,
 ) -> Result<(), DEmailError> {
     let app_state = app_handle.state::<AppState>();
-    let conn = app_state.db_conn.lock().unwrap();
-    crate::core::cache::db::save_setting(&conn, &key, &value)
+    let pool = &app_state.db_pool;
+    crate::core::cache::db::save_setting(pool, &key, &value)
 }
 
 #[tauri::command]
 pub fn get_setting(app_handle: AppHandle, key: String) -> Result<Option<String>, DEmailError> {
     let app_state = app_handle.state::<AppState>();
-    let conn = app_state.db_conn.lock().unwrap();
-    crate::core::cache::db::get_setting(&conn, &key)
+    let pool = &app_state.db_pool;
+    crate::core::cache::db::get_setting(pool, &key)
 }
 
 #[tauri::command]
@@ -454,8 +514,8 @@ pub fn get_all_settings(
     app_handle: AppHandle,
 ) -> Result<Vec<crate::models::AppSetting>, DEmailError> {
     let app_state = app_handle.state::<AppState>();
-    let conn = app_state.db_conn.lock().unwrap();
-    crate::core::cache::db::get_all_settings(&conn)
+    let pool = &app_state.db_pool;
+    crate::core::cache::db::get_all_settings(pool)
 }
 
 #[tauri::command]
