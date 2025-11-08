@@ -43,7 +43,9 @@ pub fn export_account(
 }
 
 fn export_message(message: &Message, account_path: &Path) -> Result<(), DEmailError> {
-    let date = chrono::NaiveDateTime::from_timestamp(message.date, 0);
+    let date = chrono::DateTime::from_timestamp(message.date, 0)
+        .ok_or_else(|| DEmailError::Unknown("Invalid timestamp".to_string()))?
+        .naive_utc();
     let year = date.format("%Y").to_string();
     let month = date.format("%m-%B").to_string();
     let day = date.format("%d").to_string();

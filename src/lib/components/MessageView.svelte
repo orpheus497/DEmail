@@ -1,26 +1,31 @@
-'''<script lang="ts">
+<script lang="ts">
   import { mailbox } from "$lib/stores/mailboxStore";
-
-  let selectedMessage = mailbox.selectedMessage;
 </script>
 
-<div class="p-4">
-  {#if $selectedMessage}
+<div class="p-4 h-full overflow-auto">
+  {#if $mailbox.selectedMessage}
     <div class="flex flex-col gap-4">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-4">
-          <div class="flex flex-col">
-            <div class="font-semibold">{$selectedMessage.from_header}</div>
-            <div class="text-sm text-muted-foreground">{$selectedMessage.to_header}</div>
-          </div>
+      <div class="flex items-center justify-between border-b pb-4">
+        <div class="flex flex-col gap-1">
+          <div class="font-semibold text-lg">{$mailbox.selectedMessage.from_header}</div>
+          <div class="text-sm text-muted-foreground">To: {$mailbox.selectedMessage.to_header}</div>
+          {#if $mailbox.selectedMessage.cc_header}
+            <div class="text-sm text-muted-foreground">Cc: {$mailbox.selectedMessage.cc_header}</div>
+          {/if}
         </div>
         <div class="text-sm text-muted-foreground">
-          {new Date($selectedMessage.date * 1000).toLocaleString()}
+          {new Date($mailbox.selectedMessage.date * 1000).toLocaleString()}
         </div>
       </div>
-      <div class="text-2xl font-bold">{$selectedMessage.subject}</div>
-      <div class="prose max-w-none">
-        {@html $selectedMessage.body_html}
+      <div class="text-2xl font-bold">{$mailbox.selectedMessage.subject || '(No Subject)'}</div>
+      <div class="prose prose-sm max-w-none">
+        {#if $mailbox.selectedMessage.body_html}
+          {@html $mailbox.selectedMessage.body_html}
+        {:else if $mailbox.selectedMessage.body_plain}
+          <pre class="whitespace-pre-wrap font-sans">{$mailbox.selectedMessage.body_plain}</pre>
+        {:else}
+          <div class="text-muted-foreground italic">No content available</div>
+        {/if}
       </div>
     </div>
   {:else}
@@ -29,4 +34,3 @@
     </div>
   {/if}
 </div>
-''

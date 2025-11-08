@@ -1,4 +1,4 @@
-'''import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/tauri';
 import type {
   Account,
   Folder,
@@ -61,4 +61,3 @@ export const startExport = (
 ): Promise<void> => {
   return invoke('start_export', { accountId, destinationPath });
 };
-''

@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Resizable pane components using paneforge library for adjustable 3-pane email layout
+- OAuth callback page at `/callback` route for handling authentication redirects
+- Inbox page at `/inbox` route with full 3-pane email client interface
+- Index exports for Select UI component for proper module resolution
+- Improved Settings page with account addition functionality and status feedback
+
+### Fixed
+- **CRITICAL:** Removed triple-quote syntax artifacts from multiple Svelte and TypeScript component files that prevented compilation (api.ts, utils.ts, AccountSwitcher.svelte, FolderList.svelte, MessageList.svelte, MessageView.svelte, +page.svelte, Settings.svelte, +layout.svelte)
+- **CRITICAL:** Fixed undefined variable `folders` in imap_sync.rs fetch_folders function by adding proper Vec initialization
+- **CRITICAL:** Fixed app.html to use SvelteKit placeholders (%sveltekit.head% and %sveltekit.body%) instead of vanilla Svelte structure
+- **BUG:** Fixed deprecated `chrono::NaiveDateTime::from_timestamp` API call in export.rs - now uses `chrono::DateTime::from_timestamp` with proper error handling
+- **BUG:** Removed conflicting main.ts and App.svelte files that were incompatible with SvelteKit routing
+- **BUG:** Fixed AccountSwitcher component to properly handle Select onValueChange callback with type-safe value handling
+- **BUG:** Fixed FolderList and MessageList components to use reactive mailbox store references directly
+- **BUG:** Fixed MessageView component to properly display HTML and plain text email bodies with fallback handling for empty content
+- **BUG:** Fixed routes structure - root route now redirects to /inbox, Settings moved to /settings route
+
+### Changed
+- **Dependencies:** Added paneforge (^0.2.0) to package.json for resizable panel functionality
+- **Architecture:** Refactored routing to use proper SvelteKit page structure with dedicated inbox and settings routes
+- **UI:** Simplified +layout.svelte to minimal layout wrapper, moved 3-pane UI to dedicated inbox page
+- **UI:** Improved MessageList with empty state handling and read/unread visual distinction
+- **UI:** Improved MessageView with better header layout, content display, and overflow handling
+- **UI:** Settings page now includes account addition workflow with OAuth URL opening via Tauri shell API
+
 ## [1.0.0] - 2025-11-01
 
 ### Added

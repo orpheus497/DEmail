@@ -87,6 +87,7 @@ impl ImapSync {
     ) -> Result<Vec<Folder>, DEmailError> {
         let mailboxes = session.list(Some(""), Some("*"))?;
         let conn = self.app_state.db_conn.lock().unwrap();
+        let mut folders = Vec::new();
         for mailbox in mailboxes.iter() {
             let mut folder = Folder {
                 id: 0, // Will be set by the database
