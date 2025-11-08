@@ -20,6 +20,17 @@
       "path": {
         "all": true
       },
+      "dialog": {
+        "all": false,
+        "open": true,
+        "save": true
+      },
+      "fs": {
+        "all": false,
+        "readFile": true,
+        "writeFile": true,
+        "scope": ["$APPDATA/*", "$DOWNLOAD/*", "$DOCUMENT/*"]
+      },
       "notification": {
         "all": true
       },

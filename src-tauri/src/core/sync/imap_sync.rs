@@ -7,6 +7,7 @@ use imap::{
     Client, Session,
 };
 use mail_parser::Message as ParsedMessage;
+use native_tls::TlsStream;
 use oauth2::{
     basic::BasicClient, reqwest::async_http_client, AccessToken, RefreshToken, TokenResponse,
 };
@@ -159,8 +160,6 @@ impl ImapSync {
         Ok(())
     }
 }
-
-use native_tls::TlsStream;
 
 pub async fn sync_account_manually(
     app_state: Arc<AppState>,

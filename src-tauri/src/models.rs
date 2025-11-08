@@ -61,3 +61,33 @@ pub struct OAuthProviderConfig {
     pub client_id: String,
     pub client_secret: String,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Draft {
+    pub id: i64,
+    pub account_id: i64,
+    pub to_addresses: String,
+    pub cc_addresses: Option<String>,
+    pub bcc_addresses: Option<String>,
+    pub subject: String,
+    pub body_plain: Option<String>,
+    pub body_html: Option<String>,
+    pub created_at: i64,
+    pub updated_at: i64,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct EmailSignature {
+    pub id: i64,
+    pub account_id: i64,
+    pub name: String,
+    pub content_html: String,
+    pub content_plain: String,
+    pub is_default: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct AppSetting {
+    pub key: String,
+    pub value: String,
+}
