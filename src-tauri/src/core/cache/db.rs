@@ -318,6 +318,81 @@ pub fn bulk_delete_messages(pool: &Pool, message_ids: &[i64]) -> Result<(), DEma
     Ok(())
 }
 
+pub fn bulk_mark_unread(pool: &Pool, message_ids: &[i64]) -> Result<(), DEmailError> {
+    if message_ids.is_empty() {
+        return Ok(());
+    }
+
+    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+
+    let placeholders = message_ids
+        .iter()
+        .map(|_| "?")
+        .collect::<Vec<_>>()
+        .join(",");
+
+    let query = format!("UPDATE messages SET is_read = 0 WHERE id IN ({})", placeholders);
+
+    let params: Vec<&dyn rusqlite::ToSql> = message_ids
+        .iter()
+        .map(|id| id as &dyn rusqlite::ToSql)
+        .collect();
+
+    conn.execute(&query, rusqlite::params_from_iter(params))?;
+    debug!("Bulk marked {} messages as unread", message_ids.len());
+    Ok(())
+}
+
+pub fn bulk_star_messages(pool: &Pool, message_ids: &[i64]) -> Result<(), DEmailError> {
+    if message_ids.is_empty() {
+        return Ok(());
+    }
+
+    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+
+    let placeholders = message_ids
+        .iter()
+        .map(|_| "?")
+        .collect::<Vec<_>>()
+        .join(",");
+
+    let query = format!("UPDATE messages SET is_starred = 1 WHERE id IN ({})", placeholders);
+
+    let params: Vec<&dyn rusqlite::ToSql> = message_ids
+        .iter()
+        .map(|id| id as &dyn rusqlite::ToSql)
+        .collect();
+
+    conn.execute(&query, rusqlite::params_from_iter(params))?;
+    debug!("Bulk starred {} messages", message_ids.len());
+    Ok(())
+}
+
+pub fn bulk_unstar_messages(pool: &Pool, message_ids: &[i64]) -> Result<(), DEmailError> {
+    if message_ids.is_empty() {
+        return Ok(());
+    }
+
+    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+
+    let placeholders = message_ids
+        .iter()
+        .map(|_| "?")
+        .collect::<Vec<_>>()
+        .join(",");
+
+    let query = format!("UPDATE messages SET is_starred = 0 WHERE id IN ({})", placeholders);
+
+    let params: Vec<&dyn rusqlite::ToSql> = message_ids
+        .iter()
+        .map(|id| id as &dyn rusqlite::ToSql)
+        .collect();
+
+    conn.execute(&query, rusqlite::params_from_iter(params))?;
+    debug!("Bulk unstarred {} messages", message_ids.len());
+    Ok(())
+}
+
 // ============================================================================
 // SEARCH OPERATIONS
 // ============================================================================

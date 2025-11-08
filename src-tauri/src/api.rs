@@ -536,3 +536,126 @@ pub fn prepare_forward(
     let message = get_message_details(app_handle, message_id)?;
     crate::core::reply_forward::prepare_forward(&message)
 }
+
+// ============================================================================
+// STARRING OPERATIONS
+// ============================================================================
+
+#[tauri::command]
+pub fn star_message(app_handle: AppHandle, message_id: i64) -> Result<(), DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let pool = &app_state.db_pool;
+    crate::core::cache::db::star_message(pool, message_id)
+}
+
+#[tauri::command]
+pub fn unstar_message(app_handle: AppHandle, message_id: i64) -> Result<(), DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let pool = &app_state.db_pool;
+    crate::core::cache::db::unstar_message(pool, message_id)
+}
+
+#[tauri::command]
+pub fn get_starred_messages(
+    app_handle: AppHandle,
+    account_id: i64,
+) -> Result<Vec<crate::models::MessageHeader>, DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let pool = &app_state.db_pool;
+    crate::core::cache::db::get_starred_messages(pool, account_id)
+}
+
+// ============================================================================
+// BULK OPERATIONS
+// ============================================================================
+
+#[tauri::command]
+pub fn bulk_mark_unread(
+    app_handle: AppHandle,
+    message_ids: Vec<i64>,
+) -> Result<(), DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let pool = &app_state.db_pool;
+    crate::core::cache::db::bulk_mark_unread(pool, &message_ids)
+}
+
+#[tauri::command]
+pub fn bulk_star_messages(
+    app_handle: AppHandle,
+    message_ids: Vec<i64>,
+) -> Result<(), DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let pool = &app_state.db_pool;
+    crate::core::cache::db::bulk_star_messages(pool, &message_ids)
+}
+
+#[tauri::command]
+pub fn bulk_unstar_messages(
+    app_handle: AppHandle,
+    message_ids: Vec<i64>,
+) -> Result<(), DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let pool = &app_state.db_pool;
+    crate::core::cache::db::bulk_unstar_messages(pool, &message_ids)
+}
+
+// ============================================================================
+// CONTACTS OPERATIONS
+// ============================================================================
+
+#[tauri::command]
+pub fn search_contacts(
+    app_handle: AppHandle,
+    account_id: i64,
+    query: String,
+) -> Result<Vec<crate::models::Contact>, DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let pool = &app_state.db_pool;
+    crate::core::contacts::search_contacts(pool, account_id, &query)
+}
+
+#[tauri::command]
+pub fn get_recent_contacts(
+    app_handle: AppHandle,
+    account_id: i64,
+    limit: i32,
+) -> Result<Vec<crate::models::Contact>, DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let pool = &app_state.db_pool;
+    crate::core::contacts::get_recent_contacts(pool, account_id, limit)
+}
+
+#[tauri::command]
+pub fn get_frequent_contacts(
+    app_handle: AppHandle,
+    account_id: i64,
+    limit: i32,
+) -> Result<Vec<crate::models::Contact>, DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let pool = &app_state.db_pool;
+    crate::core::contacts::get_frequent_contacts(pool, account_id, limit)
+}
+
+// ============================================================================
+// THREADING OPERATIONS
+// ============================================================================
+
+#[tauri::command]
+pub fn get_thread_messages(
+    app_handle: AppHandle,
+    thread_id: i64,
+) -> Result<Vec<crate::models::Message>, DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let pool = &app_state.db_pool;
+    crate::core::threading::get_thread_messages(pool, thread_id)
+}
+
+#[tauri::command]
+pub fn get_thread(
+    app_handle: AppHandle,
+    thread_id: i64,
+) -> Result<crate::models::Thread, DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let pool = &app_state.db_pool;
+    crate::core::threading::get_thread(pool, thread_id)
+}

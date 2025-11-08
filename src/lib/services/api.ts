@@ -202,16 +202,16 @@ export const bulkUnstarMessages = (messageIds: number[]): Promise<void> => {
 
 // ==================== Phase 3: Contacts ====================
 
-export const searchContacts = (query: string): Promise<Contact[]> => {
-  return invoke('search_contacts', { query });
+export const searchContacts = (accountId: number, query: string): Promise<Contact[]> => {
+  return invoke('search_contacts', { accountId, query });
 };
 
-export const getRecentContacts = (limit: number): Promise<Contact[]> => {
-  return invoke('get_recent_contacts', { limit });
+export const getRecentContacts = (accountId: number, limit: number): Promise<Contact[]> => {
+  return invoke('get_recent_contacts', { accountId, limit });
 };
 
-export const getFrequentContacts = (limit: number): Promise<Contact[]> => {
-  return invoke('get_frequent_contacts', { limit });
+export const getFrequentContacts = (accountId: number, limit: number): Promise<Contact[]> => {
+  return invoke('get_frequent_contacts', { accountId, limit });
 };
 
 // ==================== Phase 3: Threading ====================
