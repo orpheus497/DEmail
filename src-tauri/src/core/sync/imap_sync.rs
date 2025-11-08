@@ -161,3 +161,16 @@ impl ImapSync {
 }
 
 use native_tls::TlsStream;
+
+pub async fn sync_account_manually(
+    app_state: Arc<AppState>,
+    account_id: i64,
+    provider: &str,
+    client: &BasicClient,
+    user_email: &str,
+) -> Result<(), DEmailError> {
+    let syncer = ImapSync::new(app_state);
+    syncer
+        .initial_sync(account_id, provider, client, user_email)
+        .await
+}

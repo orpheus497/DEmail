@@ -71,5 +71,41 @@ pub fn initialize_schema(conn: &Connection) -> Result<()> {
         [],
     )?;
 
+    conn.execute(
+        "CREATE VIRTUAL TABLE IF NOT EXISTS messages_fts USING fts5(
+            subject,
+            from_header,
+            to_header,
+            body_plain,
+            content=messages,
+            content_rowid=id
+        )",
+        [],
+    )?;
+
+    conn.execute(
+        "CREATE TRIGGER IF NOT EXISTS messages_fts_insert AFTER INSERT ON messages BEGIN
+            INSERT INTO messages_fts(rowid, subject, from_header, to_header, body_plain)
+            VALUES (new.id, new.subject, new.from_header, new.to_header, new.body_plain);
+        END",
+        [],
+    )?;
+
+    conn.execute(
+        "CREATE TRIGGER IF NOT EXISTS messages_fts_delete AFTER DELETE ON messages BEGIN
+            DELETE FROM messages_fts WHERE rowid = old.id;
+        END",
+        [],
+    )?;
+
+    conn.execute(
+        "CREATE TRIGGER IF NOT EXISTS messages_fts_update AFTER UPDATE ON messages BEGIN
+            DELETE FROM messages_fts WHERE rowid = old.id;
+            INSERT INTO messages_fts(rowid, subject, from_header, to_header, body_plain)
+            VALUES (new.id, new.subject, new.from_header, new.to_header, new.body_plain);
+        END",
+        [],
+    )?;
+
     Ok(())
 }

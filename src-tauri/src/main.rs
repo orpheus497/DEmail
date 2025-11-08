@@ -51,6 +51,10 @@ fn main() {
             api::start_export,
             api::save_oauth_provider_config,
             api::get_oauth_provider_configs,
+            api::mark_message_read,
+            api::mark_message_unread,
+            api::refresh_account,
+            api::search_messages,
         ])
         .build(context)
         .expect("error while building tauri application")

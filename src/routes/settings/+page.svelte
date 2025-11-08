@@ -1,9 +1,9 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { goto } from "$app/navigation";
-  import { Button } from "$lib/components/ui/button";
-  import { Input } from "$lib/components/ui/input";
-  import { Label } from "$lib/components/ui/label";
+  import Button from "$lib/components/ui/button/index.svelte";
+  import Input from "$lib/components/ui/input/index.svelte";
+  import Label from "$lib/components/ui/label/index.svelte";
   import {
     getOauthProviderConfigs,
     saveOauthProviderConfig,
