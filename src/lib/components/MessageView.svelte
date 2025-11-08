@@ -5,12 +5,14 @@
   import { downloadAttachment, getThread } from "$lib/services/api";
   import { save } from "@tauri-apps/api/dialog";
   import Button from "$lib/components/ui/button/index.svelte";
+  import ThreadView from "$lib/components/ThreadView.svelte";
   import type { Thread } from "$lib/types";
 
   let currentMessageId: number | null = null;
   let downloadingAttachmentId: number | null = null;
   let threadInfo: Thread | null = null;
   let loadingThread = false;
+  let showThreadView = false;
 
   $: {
     if ($mailbox.selectedMessage && $mailbox.selectedMessage.id !== currentMessageId) {
@@ -51,7 +53,7 @@
 
   function handleViewThread() {
     if ($mailbox.selectedMessage?.thread_id) {
-      mailbox.loadThreadMessages($mailbox.selectedMessage.thread_id);
+      showThreadView = true;
     }
   }
 
@@ -179,3 +181,11 @@
     </div>
   {/if}
 </div>
+
+<!-- Thread View Modal -->
+{#if $mailbox.selectedMessage?.thread_id}
+  <ThreadView
+    threadId={$mailbox.selectedMessage.thread_id}
+    bind:visible={showThreadView}
+  />
+{/if}

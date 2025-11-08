@@ -20,6 +20,7 @@
   let refreshing = false;
   let showKeyboardHelp = false;
   let messageListRef: MessageList;
+  let searchBarRef: SearchBar;
   let selectedMessageIds: number[] = [];
   let currentMessageIndex = -1;
 
@@ -149,6 +150,40 @@
         handleForward();
         break;
 
+      case 'e':
+      case '#':
+        event.preventDefault();
+        deleteCurrentMessage();
+        break;
+
+      case 'x':
+        event.preventDefault();
+        toggleSelectCurrentMessage();
+        break;
+
+      case '/':
+        event.preventDefault();
+        focusSearch();
+        break;
+
+      case '*':
+        // Wait for second key
+        event.preventDefault();
+        setTimeout(() => {
+          const handleSecondKey = (e: KeyboardEvent) => {
+            if (e.key === 'a') {
+              e.preventDefault();
+              selectAllMessages();
+            } else if (e.key === 'n') {
+              e.preventDefault();
+              deselectAllMessages();
+            }
+            window.removeEventListener('keydown', handleSecondKey);
+          };
+          window.addEventListener('keydown', handleSecondKey, { once: true });
+        }, 10);
+        break;
+
       case 'Escape':
         event.preventDefault();
         if (showKeyboardHelp) {
@@ -191,6 +226,48 @@
         mailbox.starMessage($mailbox.selectedMessage.id);
       }
     }
+  }
+
+  function deleteCurrentMessage() {
+    if ($mailbox.selectedMessage) {
+      if (confirm('Delete this message?')) {
+        mailbox.deleteMessage($mailbox.selectedMessage.id);
+      }
+    }
+  }
+
+  function toggleSelectCurrentMessage() {
+    if ($mailbox.selectedMessage && messageListRef) {
+      const messageId = $mailbox.selectedMessage.id;
+      const currentSelection = messageListRef.getSelectedMessages();
+
+      if (currentSelection.includes(messageId)) {
+        // Already selected, deselect it
+        const newSelection = currentSelection.filter(id => id !== messageId);
+        selectedMessageIds = newSelection;
+      } else {
+        // Not selected, select it
+        selectedMessageIds = [...currentSelection, messageId];
+      }
+    }
+  }
+
+  function focusSearch() {
+    // Find the search input and focus it
+    const searchInput = document.querySelector('input[type="search"], input[placeholder*="Search"]') as HTMLInputElement;
+    if (searchInput) {
+      searchInput.focus();
+    }
+  }
+
+  function selectAllMessages() {
+    if (messageListRef && $mailbox.messages.length > 0) {
+      selectedMessageIds = $mailbox.messages.map(m => m.id);
+    }
+  }
+
+  function deselectAllMessages() {
+    handleClearSelection();
   }
 
   // Update current message index when selection changes

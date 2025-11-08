@@ -32,7 +32,7 @@
       title: "Actions",
       shortcuts: [
         { keys: "s", description: "Star/unstar message" },
-        { keys: "e", description: "Archive message" },
+        { keys: "e / #", description: "Delete message" },
         { keys: "r", description: "Reply to message" },
         { keys: "a", description: "Reply all" },
         { keys: "f", description: "Forward message" },
