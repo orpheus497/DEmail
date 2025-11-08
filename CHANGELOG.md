@@ -105,6 +105,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Corrected paneforge dependency version in package.json from non-existent ^0.2.0 to ^0.0.6 for Svelte 4 compatibility
+- **CRITICAL:** Fixed type mismatch in Attachment model - changed `local_path` field from `String` to `Option<String>` in models.rs and database schema to allow NULL values for attachments without local storage
 - **CRITICAL:** Removed triple-quote syntax artifacts from multiple Svelte and TypeScript component files that prevented compilation (api.ts, utils.ts, AccountSwitcher.svelte, FolderList.svelte, MessageList.svelte, MessageView.svelte, +page.svelte, Settings.svelte, +layout.svelte)
 - **CRITICAL:** Fixed undefined variable `folders` in imap_sync.rs fetch_folders function by adding proper Vec initialization
 - **CRITICAL:** Fixed app.html to use SvelteKit placeholders (%sveltekit.head% and %sveltekit.body%) instead of vanilla Svelte structure

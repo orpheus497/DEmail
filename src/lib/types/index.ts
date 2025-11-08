@@ -46,7 +46,7 @@ export interface Attachment {
   filename: string;
   mime_type: string;
   size_bytes: number;
-  local_path: string;
+  local_path: string | null;
 }
 
 export interface OAuthProviderConfig {

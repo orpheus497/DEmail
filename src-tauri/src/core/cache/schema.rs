@@ -55,7 +55,7 @@ pub fn initialize_schema(conn: &Connection) -> Result<()> {
             filename TEXT NOT NULL,
             mime_type TEXT NOT NULL,
             size_bytes INTEGER NOT NULL,
-            local_path TEXT NOT NULL,
+            local_path TEXT,
             FOREIGN KEY (message_id) REFERENCES messages (id) ON DELETE CASCADE
         )",
         [],

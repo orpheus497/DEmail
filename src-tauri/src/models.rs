@@ -53,7 +53,7 @@ pub struct Attachment {
     pub filename: String,
     pub mime_type: String,
     pub size_bytes: i64,
-    pub local_path: String,
+    pub local_path: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
