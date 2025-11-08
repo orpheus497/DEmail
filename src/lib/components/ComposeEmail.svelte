@@ -1,22 +1,68 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount } from 'svelte';
   import Button from '$lib/components/ui/button/index.svelte';
   import Input from '$lib/components/ui/input/index.svelte';
   import Label from '$lib/components/ui/label/index.svelte';
-  import { sendEmail } from '$lib/services/api';
+  import ContactAutocomplete from '$lib/components/ContactAutocomplete.svelte';
+  import { sendEmail, prepareReply, prepareForward } from '$lib/services/api';
   import { X } from 'lucide-svelte';
 
   export let accountId: number;
   export let open = false;
+  export let mode: 'compose' | 'reply' | 'replyAll' | 'forward' = 'compose';
+  export let messageId: number | null = null;
 
   let to = '';
   let cc = '';
+  let bcc = '';
   let subject = '';
   let body = '';
   let sending = false;
+  let loading = false;
   let error: string | null = null;
 
   const dispatch = createEventDispatcher<{ sent: void; close: void }>();
+
+  // Load reply/forward data when mode changes
+  $: if (open && messageId && mode !== 'compose') {
+    loadComposeData();
+  }
+
+  async function loadComposeData() {
+    if (!messageId) return;
+
+    loading = true;
+    error = null;
+
+    try {
+      if (mode === 'reply' || mode === 'replyAll') {
+        const replyData = await prepareReply(messageId, mode === 'replyAll');
+        to = replyData.to;
+        cc = replyData.cc || '';
+        subject = replyData.subject;
+        body = '\n\n' + replyData.quoted_body;
+      } else if (mode === 'forward') {
+        const forwardData = await prepareForward(messageId);
+        to = '';
+        cc = '';
+        subject = forwardData.subject;
+        body = '\n\n' + forwardData.body_with_header;
+      }
+    } catch (e) {
+      error = `Failed to load ${mode} data: ${String(e)}`;
+    } finally {
+      loading = false;
+    }
+  }
+
+  function getTitle(): string {
+    switch (mode) {
+      case 'reply': return 'Reply';
+      case 'replyAll': return 'Reply All';
+      case 'forward': return 'Forward';
+      default: return 'Compose Email';
+    }
+  }
 
   async function handleSend() {
     if (!to.trim() || !subject.trim()) {
@@ -53,9 +99,12 @@
   function resetForm() {
     to = '';
     cc = '';
+    bcc = '';
     subject = '';
     body = '';
     error = null;
+    mode = 'compose';
+    messageId = null;
   }
 
   function handleClose() {
@@ -69,42 +118,46 @@
   <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
     <div class="bg-background rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] flex flex-col">
       <div class="flex items-center justify-between p-6 border-b">
-        <h2 class="text-2xl font-bold">Compose Email</h2>
+        <h2 class="text-2xl font-bold">{getTitle()}</h2>
         <Button variant="ghost" size="sm" on:click={handleClose}>
           <X class="h-4 w-4" />
         </Button>
       </div>
 
       <div class="flex-1 overflow-y-auto p-6">
-        {#if error}
-          <div class="mb-4 p-3 bg-destructive/10 text-destructive rounded-md text-sm">
-            {error}
+        {#if loading}
+          <div class="flex items-center justify-center p-8">
+            <div class="text-muted-foreground">Loading...</div>
           </div>
-        {/if}
+        {:else}
+          {#if error}
+            <div class="mb-4 p-3 bg-destructive/10 text-destructive rounded-md text-sm">
+              {error}
+            </div>
+          {/if}
 
         <form on:submit|preventDefault={handleSend} class="space-y-4">
-          <div>
-            <Label for="to">To *</Label>
-            <Input
-              id="to"
-              type="email"
-              bind:value={to}
-              placeholder="recipient@example.com"
-              required
-              class="mt-1"
-            />
-          </div>
+          <ContactAutocomplete
+            id="to"
+            label="To"
+            bind:value={to}
+            placeholder="recipient@example.com"
+            required={true}
+          />
 
-          <div>
-            <Label for="cc">CC</Label>
-            <Input
-              id="cc"
-              type="email"
-              bind:value={cc}
-              placeholder="cc@example.com (optional)"
-              class="mt-1"
-            />
-          </div>
+          <ContactAutocomplete
+            id="cc"
+            label="CC"
+            bind:value={cc}
+            placeholder="cc@example.com (optional)"
+          />
+
+          <ContactAutocomplete
+            id="bcc"
+            label="BCC"
+            bind:value={bcc}
+            placeholder="bcc@example.com (optional)"
+          />
 
           <div>
             <Label for="subject">Subject *</Label>
@@ -137,6 +190,7 @@
             </Button>
           </div>
         </form>
+        {/if}
       </div>
     </div>
   </div>

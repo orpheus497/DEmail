@@ -15,6 +15,8 @@
   import { Settings, Pencil, RefreshCw, HelpCircle } from "lucide-svelte";
 
   let composeOpen = false;
+  let composeMode: 'compose' | 'reply' | 'replyAll' | 'forward' = 'compose';
+  let composeMessageId: number | null = null;
   let refreshing = false;
   let showKeyboardHelp = false;
   let messageListRef: MessageList;
@@ -27,6 +29,32 @@
 
   function handleCompose() {
     if ($mailbox.selectedAccount) {
+      composeMode = 'compose';
+      composeMessageId = null;
+      composeOpen = true;
+    }
+  }
+
+  function handleReply() {
+    if ($mailbox.selectedMessage) {
+      composeMode = 'reply';
+      composeMessageId = $mailbox.selectedMessage.id;
+      composeOpen = true;
+    }
+  }
+
+  function handleReplyAll() {
+    if ($mailbox.selectedMessage) {
+      composeMode = 'replyAll';
+      composeMessageId = $mailbox.selectedMessage.id;
+      composeOpen = true;
+    }
+  }
+
+  function handleForward() {
+    if ($mailbox.selectedMessage) {
+      composeMode = 'forward';
+      composeMessageId = $mailbox.selectedMessage.id;
       composeOpen = true;
     }
   }
@@ -108,7 +136,17 @@
           return;
         }
         event.preventDefault();
-        // TODO: Implement reply
+        handleReply();
+        break;
+
+      case 'a':
+        event.preventDefault();
+        handleReplyAll();
+        break;
+
+      case 'f':
+        event.preventDefault();
+        handleForward();
         break;
 
       case 'Escape':
@@ -261,6 +299,8 @@
     <ComposeEmail
       accountId={$mailbox.selectedAccount.id}
       bind:open={composeOpen}
+      mode={composeMode}
+      messageId={composeMessageId}
       on:sent={handleEmailSent}
     />
   {/if}
