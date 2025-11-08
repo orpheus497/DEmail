@@ -85,7 +85,14 @@
   <div
     class="fixed bg-popover border rounded-md shadow-md py-1 z-50"
     style="left: {contextMenuPosition.x}px; top: {contextMenuPosition.y}px;"
+    role="menu"
+    tabindex="-1"
     on:click|stopPropagation
+    on:keydown={(e) => {
+      if (e.key === 'Escape') {
+        closeContextMenu();
+      }
+    }}
   >
     {#if contextMenuMessage.is_read}
       <button

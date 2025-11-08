@@ -104,6 +104,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rust dependencies: `uuid` (1.6) with v4 and serde features for unique identifier generation
 
 ### Fixed
+- **CRITICAL BUILD:** Fixed SvelteKit adapter configuration - added fallback: 'index.html' to adapter-static for proper SPA mode enabling production builds for Tauri desktop application
+- **CRITICAL BUILD:** Created src/routes/+layout.ts with prerender: false and ssr: false to disable server-side rendering for Tauri desktop application
+- Accessibility improvement: Added keyboard event handler (Escape key) and ARIA role to context menu in MessageList component for compliance with a11y guidelines
 - Corrected paneforge dependency version in package.json from non-existent ^0.2.0 to ^0.0.6 for Svelte 4 compatibility
 - **CRITICAL:** Fixed type mismatch in Attachment model - changed `local_path` field from `String` to `Option<String>` in models.rs and database schema to allow NULL values for attachments without local storage
 - **CRITICAL:** Removed triple-quote syntax artifacts from multiple Svelte and TypeScript component files that prevented compilation (api.ts, utils.ts, AccountSwitcher.svelte, FolderList.svelte, MessageList.svelte, MessageView.svelte, +page.svelte, Settings.svelte, +layout.svelte)
