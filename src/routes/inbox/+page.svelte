@@ -10,10 +10,16 @@
   import MessageView from "$lib/components/MessageView.svelte";
   import SearchBar from "$lib/components/SearchBar.svelte";
   import ComposeEmail from "$lib/components/ComposeEmail.svelte";
-  import { Settings, Pencil, RefreshCw } from "lucide-svelte";
+  import BulkActionToolbar from "$lib/components/BulkActionToolbar.svelte";
+  import KeyboardShortcutsHelp from "$lib/components/KeyboardShortcutsHelp.svelte";
+  import { Settings, Pencil, RefreshCw, HelpCircle } from "lucide-svelte";
 
   let composeOpen = false;
   let refreshing = false;
+  let showKeyboardHelp = false;
+  let messageListRef: MessageList;
+  let selectedMessageIds: number[] = [];
+  let currentMessageIndex = -1;
 
   onMount(() => {
     mailbox.fetchAccounts();
@@ -43,7 +49,119 @@
   function handleEmailSent() {
     composeOpen = false;
   }
+
+  function handleSelectionChange(event: CustomEvent<number[]>) {
+    selectedMessageIds = event.detail;
+  }
+
+  function handleClearSelection() {
+    if (messageListRef) {
+      messageListRef.clearSelection();
+      selectedMessageIds = [];
+    }
+  }
+
+  // Phase 3: Keyboard shortcuts
+  function handleKeydown(event: KeyboardEvent) {
+    // Ignore if user is typing in an input field
+    const target = event.target as HTMLElement;
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+      return;
+    }
+
+    const messages = $mailbox.messages;
+    if (messages.length === 0 && event.key !== '?' && event.key !== 'c') {
+      return;
+    }
+
+    switch (event.key) {
+      case '?':
+        event.preventDefault();
+        showKeyboardHelp = !showKeyboardHelp;
+        break;
+
+      case 'c':
+        event.preventDefault();
+        handleCompose();
+        break;
+
+      case 'j':
+      case 'ArrowDown':
+        event.preventDefault();
+        navigateNextMessage();
+        break;
+
+      case 'k':
+      case 'ArrowUp':
+        event.preventDefault();
+        navigatePreviousMessage();
+        break;
+
+      case 's':
+        event.preventDefault();
+        toggleStarCurrentMessage();
+        break;
+
+      case 'r':
+        if (event.ctrlKey || event.metaKey) {
+          // Don't prevent default browser refresh
+          return;
+        }
+        event.preventDefault();
+        // TODO: Implement reply
+        break;
+
+      case 'Escape':
+        event.preventDefault();
+        if (showKeyboardHelp) {
+          showKeyboardHelp = false;
+        } else {
+          handleClearSelection();
+        }
+        break;
+    }
+  }
+
+  function navigateNextMessage() {
+    const messages = $mailbox.messages;
+    if (messages.length === 0) return;
+
+    if (currentMessageIndex < messages.length - 1) {
+      currentMessageIndex++;
+      mailbox.selectMessage(messages[currentMessageIndex]);
+    }
+  }
+
+  function navigatePreviousMessage() {
+    const messages = $mailbox.messages;
+    if (messages.length === 0) return;
+
+    if (currentMessageIndex > 0) {
+      currentMessageIndex--;
+      mailbox.selectMessage(messages[currentMessageIndex]);
+    } else if (currentMessageIndex === -1 && messages.length > 0) {
+      currentMessageIndex = 0;
+      mailbox.selectMessage(messages[0]);
+    }
+  }
+
+  function toggleStarCurrentMessage() {
+    if ($mailbox.selectedMessage) {
+      if ($mailbox.selectedMessage.is_starred) {
+        mailbox.unstarMessage($mailbox.selectedMessage.id);
+      } else {
+        mailbox.starMessage($mailbox.selectedMessage.id);
+      }
+    }
+  }
+
+  // Update current message index when selection changes
+  $: if ($mailbox.selectedMessage) {
+    currentMessageIndex = $mailbox.messages.findIndex(m => m.id === $mailbox.selectedMessage?.id);
+  }
 </script>
+
+<svelte:window on:keydown={handleKeydown} />
 
 <div class="h-screen flex flex-col">
   <header class="border-b p-4 flex items-center justify-between">
@@ -66,6 +184,14 @@
       >
         <RefreshCw class="h-4 w-4 mr-2 {refreshing ? 'animate-spin' : ''}" />
         Refresh
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        on:click={() => showKeyboardHelp = !showKeyboardHelp}
+        title="Keyboard shortcuts (?)"
+      >
+        <HelpCircle class="h-4 w-4" />
       </Button>
       <Button variant="outline" size="sm" on:click={() => goto("/settings")}>
         <Settings class="h-4 w-4 mr-2" />
@@ -107,7 +233,10 @@
             <SearchBar on:search={handleSearch} />
           </div>
           <div class="flex-1 overflow-auto">
-            <MessageList />
+            <MessageList
+              bind:this={messageListRef}
+              on:selectionChange={handleSelectionChange}
+            />
           </div>
         </div>
       </Resizable.Pane>
@@ -135,4 +264,13 @@
       on:sent={handleEmailSent}
     />
   {/if}
+
+  <!-- Phase 3: Bulk action toolbar -->
+  <BulkActionToolbar
+    {selectedMessageIds}
+    on:clearSelection={handleClearSelection}
+  />
+
+  <!-- Phase 3: Keyboard shortcuts help -->
+  <KeyboardShortcutsHelp bind:visible={showKeyboardHelp} />
 </div>

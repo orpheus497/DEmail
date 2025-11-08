@@ -1,13 +1,16 @@
 <script lang="ts">
   import { mailbox } from "$lib/stores/mailboxStore";
   import { onMount } from "svelte";
-  import { Paperclip, Download } from "lucide-svelte";
-  import { downloadAttachment } from "$lib/services/api";
+  import { Paperclip, Download, Star, MessageSquare } from "lucide-svelte";
+  import { downloadAttachment, getThread } from "$lib/services/api";
   import { save } from "@tauri-apps/api/dialog";
   import Button from "$lib/components/ui/button/index.svelte";
+  import type { Thread } from "$lib/types";
 
   let currentMessageId: number | null = null;
   let downloadingAttachmentId: number | null = null;
+  let threadInfo: Thread | null = null;
+  let loadingThread = false;
 
   $: {
     if ($mailbox.selectedMessage && $mailbox.selectedMessage.id !== currentMessageId) {
@@ -15,6 +18,40 @@
       if (!$mailbox.selectedMessage.is_read) {
         mailbox.markRead($mailbox.selectedMessage.id);
       }
+      // Load thread info if message is part of a thread
+      loadThreadInfo();
+    }
+  }
+
+  async function loadThreadInfo() {
+    if ($mailbox.selectedMessage?.thread_id) {
+      try {
+        loadingThread = true;
+        threadInfo = await getThread($mailbox.selectedMessage.thread_id);
+      } catch (error) {
+        console.error('Failed to load thread info:', error);
+        threadInfo = null;
+      } finally {
+        loadingThread = false;
+      }
+    } else {
+      threadInfo = null;
+    }
+  }
+
+  function handleStarToggle() {
+    if ($mailbox.selectedMessage) {
+      if ($mailbox.selectedMessage.is_starred) {
+        mailbox.unstarMessage($mailbox.selectedMessage.id);
+      } else {
+        mailbox.starMessage($mailbox.selectedMessage.id);
+      }
+    }
+  }
+
+  function handleViewThread() {
+    if ($mailbox.selectedMessage?.thread_id) {
+      mailbox.loadThreadMessages($mailbox.selectedMessage.thread_id);
     }
   }
 
@@ -50,18 +87,52 @@
   {#if $mailbox.selectedMessage}
     <div class="flex flex-col gap-4">
       <div class="flex items-center justify-between border-b pb-4">
-        <div class="flex flex-col gap-1">
+        <div class="flex flex-col gap-1 flex-1">
           <div class="font-semibold text-lg">{$mailbox.selectedMessage.from_header}</div>
           <div class="text-sm text-muted-foreground">To: {$mailbox.selectedMessage.to_header}</div>
           {#if $mailbox.selectedMessage.cc_header}
             <div class="text-sm text-muted-foreground">Cc: {$mailbox.selectedMessage.cc_header}</div>
           {/if}
         </div>
-        <div class="text-sm text-muted-foreground">
-          {new Date($mailbox.selectedMessage.date * 1000).toLocaleString()}
+        <div class="flex items-center gap-2">
+          <div class="text-sm text-muted-foreground">
+            {new Date($mailbox.selectedMessage.date * 1000).toLocaleString()}
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            on:click={handleStarToggle}
+            aria-label={$mailbox.selectedMessage.is_starred ? 'Unstar message' : 'Star message'}
+          >
+            <Star
+              class="h-5 w-5 {$mailbox.selectedMessage.is_starred ? 'text-yellow-500 fill-yellow-500' : ''}"
+            />
+          </Button>
         </div>
       </div>
-      <div class="text-2xl font-bold">{$mailbox.selectedMessage.subject || '(No Subject)'}</div>
+
+      <div class="flex items-center justify-between">
+        <div class="text-2xl font-bold">{$mailbox.selectedMessage.subject || '(No Subject)'}</div>
+      </div>
+
+      <!-- Threading indicator -->
+      {#if threadInfo && threadInfo.message_count > 1}
+        <div class="bg-accent rounded-md p-3 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <MessageSquare class="h-4 w-4 text-muted-foreground" />
+            <span class="text-sm">
+              This message is part of a conversation with {threadInfo.message_count} message{threadInfo.message_count > 1 ? 's' : ''}
+            </span>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            on:click={handleViewThread}
+          >
+            View Conversation
+          </Button>
+        </div>
+      {/if}
       <div class="prose prose-sm max-w-none">
         {#if $mailbox.selectedMessage.body_html}
           {@html $mailbox.selectedMessage.body_html}

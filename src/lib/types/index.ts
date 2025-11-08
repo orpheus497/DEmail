@@ -20,6 +20,7 @@ export interface MessageHeader {
   date: number;
   is_read: boolean;
   has_attachments: boolean;
+  is_starred: boolean;
 }
 
 export interface Message {
@@ -37,6 +38,8 @@ export interface Message {
   body_html: string | null;
   has_attachments: boolean;
   is_read: boolean;
+  is_starred: boolean;
+  thread_id: number | null;
   attachments: Attachment[];
 }
 
@@ -79,4 +82,23 @@ export interface EmailSignature {
 export interface AppSetting {
   key: string;
   value: string;
+}
+
+export interface Contact {
+  id: number;
+  email: string;
+  name: string | null;
+  last_used: number;
+  use_count: number;
+}
+
+export interface Thread {
+  id: number;
+  subject_hash: string;
+  first_message_id: number;
+  last_message_id: number;
+  message_count: number;
+  account_id: number;
+  created_at: number;
+  updated_at: number;
 }

@@ -4,6 +4,7 @@
   import Button from "$lib/components/ui/button/index.svelte";
   import Input from "$lib/components/ui/input/index.svelte";
   import Label from "$lib/components/ui/label/index.svelte";
+  import ThemeToggle from "$lib/components/ThemeToggle.svelte";
   import {
     getOauthProviderConfigs,
     saveOauthProviderConfig,
@@ -67,6 +68,22 @@
   {/if}
 
   <div class="space-y-8">
+    <section>
+      <h2 class="text-xl font-semibold mb-4">Appearance</h2>
+      <p class="text-sm text-muted-foreground mb-4">
+        Customize the look and feel of DEmail.
+      </p>
+      <div class="border rounded-lg p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="font-medium">Theme</h3>
+            <p class="text-sm text-muted-foreground">Toggle between light and dark mode</p>
+          </div>
+          <ThemeToggle />
+        </div>
+      </div>
+    </section>
+
     <section>
       <h2 class="text-xl font-semibold mb-4">OAuth Provider Configuration</h2>
       <p class="text-sm text-muted-foreground mb-6">

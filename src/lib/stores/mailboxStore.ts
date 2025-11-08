@@ -5,6 +5,15 @@ import {
   getFolders,
   getMessages,
   getMessageDetails,
+  starMessage as apiStarMessage,
+  unstarMessage as apiUnstarMessage,
+  getStarredMessages,
+  bulkMarkRead as apiBulkMarkRead,
+  bulkMarkUnread as apiBulkMarkUnread,
+  bulkDeleteMessages as apiBulkDeleteMessages,
+  bulkStarMessages as apiBulkStarMessages,
+  bulkUnstarMessages as apiBulkUnstarMessages,
+  getThreadMessages,
 } from '../services/api';
 
 interface MailboxStore {
@@ -244,6 +253,208 @@ const createMailboxStore = () => {
     }
   };
 
+  // ==================== Phase 3: Starring Messages ====================
+
+  const starMessage = async (messageId: number) => {
+    try {
+      await apiStarMessage(messageId);
+      update((state) => {
+        const updatedMessages = state.messages.map((msg) =>
+          msg.id === messageId ? { ...msg, is_starred: true } : msg
+        );
+        const updatedSelectedMessage =
+          state.selectedMessage?.id === messageId
+            ? { ...state.selectedMessage, is_starred: true }
+            : state.selectedMessage;
+        return {
+          ...state,
+          messages: updatedMessages,
+          selectedMessage: updatedSelectedMessage,
+        };
+      });
+    } catch (error) {
+      update((state) => ({ ...state, error: String(error) }));
+    }
+  };
+
+  const unstarMessage = async (messageId: number) => {
+    try {
+      await apiUnstarMessage(messageId);
+      update((state) => {
+        const updatedMessages = state.messages.map((msg) =>
+          msg.id === messageId ? { ...msg, is_starred: false } : msg
+        );
+        const updatedSelectedMessage =
+          state.selectedMessage?.id === messageId
+            ? { ...state.selectedMessage, is_starred: false }
+            : state.selectedMessage;
+        return {
+          ...state,
+          messages: updatedMessages,
+          selectedMessage: updatedSelectedMessage,
+        };
+      });
+    } catch (error) {
+      update((state) => ({ ...state, error: String(error) }));
+    }
+  };
+
+  const loadStarredMessages = async () => {
+    update((state) => ({ ...state, loading: true, error: null }));
+    try {
+      const { selectedAccount } = await new Promise<MailboxStore>((resolve) => {
+        const unsub = subscribe((state) => {
+          resolve(state);
+          unsub();
+        });
+      });
+
+      if (!selectedAccount) {
+        update((state) => ({ ...state, loading: false }));
+        return;
+      }
+
+      const messages = await getStarredMessages(selectedAccount.id);
+      update((state) => ({ ...state, messages, loading: false }));
+    } catch (error) {
+      update((state) => ({ ...state, error: String(error), loading: false }));
+    }
+  };
+
+  // ==================== Phase 3: Bulk Operations ====================
+
+  const bulkMarkRead = async (messageIds: number[]) => {
+    try {
+      await apiBulkMarkRead(messageIds);
+      update((state) => {
+        const updatedMessages = state.messages.map((msg) =>
+          messageIds.includes(msg.id) ? { ...msg, is_read: true } : msg
+        );
+        const updatedSelectedMessage =
+          state.selectedMessage && messageIds.includes(state.selectedMessage.id)
+            ? { ...state.selectedMessage, is_read: true }
+            : state.selectedMessage;
+        return {
+          ...state,
+          messages: updatedMessages,
+          selectedMessage: updatedSelectedMessage,
+        };
+      });
+    } catch (error) {
+      update((state) => ({ ...state, error: String(error) }));
+    }
+  };
+
+  const bulkMarkUnread = async (messageIds: number[]) => {
+    try {
+      await apiBulkMarkUnread(messageIds);
+      update((state) => {
+        const updatedMessages = state.messages.map((msg) =>
+          messageIds.includes(msg.id) ? { ...msg, is_read: false } : msg
+        );
+        const updatedSelectedMessage =
+          state.selectedMessage && messageIds.includes(state.selectedMessage.id)
+            ? { ...state.selectedMessage, is_read: false }
+            : state.selectedMessage;
+        return {
+          ...state,
+          messages: updatedMessages,
+          selectedMessage: updatedSelectedMessage,
+        };
+      });
+    } catch (error) {
+      update((state) => ({ ...state, error: String(error) }));
+    }
+  };
+
+  const bulkDelete = async (messageIds: number[]) => {
+    try {
+      await apiBulkDeleteMessages(messageIds);
+      update((state) => {
+        const updatedMessages = state.messages.filter(
+          (msg) => !messageIds.includes(msg.id)
+        );
+        const updatedSelectedMessage =
+          state.selectedMessage && messageIds.includes(state.selectedMessage.id)
+            ? null
+            : state.selectedMessage;
+        return {
+          ...state,
+          messages: updatedMessages,
+          selectedMessage: updatedSelectedMessage,
+        };
+      });
+    } catch (error) {
+      update((state) => ({ ...state, error: String(error) }));
+    }
+  };
+
+  const bulkStar = async (messageIds: number[]) => {
+    try {
+      await apiBulkStarMessages(messageIds);
+      update((state) => {
+        const updatedMessages = state.messages.map((msg) =>
+          messageIds.includes(msg.id) ? { ...msg, is_starred: true } : msg
+        );
+        const updatedSelectedMessage =
+          state.selectedMessage && messageIds.includes(state.selectedMessage.id)
+            ? { ...state.selectedMessage, is_starred: true }
+            : state.selectedMessage;
+        return {
+          ...state,
+          messages: updatedMessages,
+          selectedMessage: updatedSelectedMessage,
+        };
+      });
+    } catch (error) {
+      update((state) => ({ ...state, error: String(error) }));
+    }
+  };
+
+  const bulkUnstar = async (messageIds: number[]) => {
+    try {
+      await apiBulkUnstarMessages(messageIds);
+      update((state) => {
+        const updatedMessages = state.messages.map((msg) =>
+          messageIds.includes(msg.id) ? { ...msg, is_starred: false } : msg
+        );
+        const updatedSelectedMessage =
+          state.selectedMessage && messageIds.includes(state.selectedMessage.id)
+            ? { ...state.selectedMessage, is_starred: false }
+            : state.selectedMessage;
+        return {
+          ...state,
+          messages: updatedMessages,
+          selectedMessage: updatedSelectedMessage,
+        };
+      });
+    } catch (error) {
+      update((state) => ({ ...state, error: String(error) }));
+    }
+  };
+
+  // ==================== Phase 3: Threading ====================
+
+  const loadThreadMessages = async (threadId: number) => {
+    update((state) => ({ ...state, loading: true, error: null }));
+    try {
+      const threadMessages = await getThreadMessages(threadId);
+      // Convert full messages to message headers for display in list
+      const messageHeaders: MessageHeader[] = threadMessages.map((msg) => ({
+        id: msg.id,
+        subject: msg.subject,
+        from: msg.from_header,
+        date: msg.date,
+        is_read: msg.is_read,
+        has_attachments: msg.has_attachments,
+        is_starred: msg.is_starred,
+      }));
+      update((state) => ({ ...state, messages: messageHeaders, loading: false }));
+    } catch (error) {
+      update((state) => ({ ...state, error: String(error), loading: false }));
+    }
+  };
+
   return {
     subscribe,
     fetchAccounts,
@@ -256,6 +467,15 @@ const createMailboxStore = () => {
     searchInMessages,
     deleteMessage,
     moveMessage,
+    starMessage,
+    unstarMessage,
+    loadStarredMessages,
+    bulkMarkRead,
+    bulkMarkUnread,
+    bulkDelete,
+    bulkStar,
+    bulkUnstar,
+    loadThreadMessages,
   };
 };
 
