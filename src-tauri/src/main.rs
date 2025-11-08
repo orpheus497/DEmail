@@ -12,6 +12,7 @@ use crate::core::auth::{AppState, OAuth2StateMap};
 use crate::core::cache::db;
 use crate::core::sync::background_sync;
 use std::collections::HashMap;
+use std::sync::Arc;
 use tauri::{Manager, RunEvent};
 
 fn main() {
@@ -29,8 +30,8 @@ fn main() {
                 db::initialize_database(&app_config).expect("Database initialization failed");
 
             app.manage(AppState {
-                db_conn: std::sync::Mutex::new(db_conn),
-                app_config: std::sync::Mutex::new(app_config.clone()),
+                db_conn: Arc::new(std::sync::Mutex::new(db_conn)),
+                app_config: Arc::new(std::sync::Mutex::new(app_config.clone())),
             });
 
             app.manage(OAuth2StateMap(std::sync::Mutex::new(HashMap::new())));
@@ -55,6 +56,15 @@ fn main() {
             api::mark_message_unread,
             api::refresh_account,
             api::search_messages,
+            api::save_draft,
+            api::get_drafts,
+            api::delete_draft,
+            api::save_signature,
+            api::get_signatures,
+            api::delete_signature,
+            api::download_attachment,
+            api::get_messages_paginated,
+            api::count_messages_in_folder,
         ])
         .build(context)
         .expect("error while building tauri application")

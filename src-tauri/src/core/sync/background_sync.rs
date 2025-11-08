@@ -46,7 +46,12 @@ async fn sync_all_accounts(app_handle: AppHandle) -> Result<(), DEmailError> {
             _ => continue,
         };
 
-        let imap_sync = ImapSync::new(app_state.clone());
+        let app_state_arc = std::sync::Arc::new(AppState {
+            db_conn: app_state.db_conn.clone(),
+            app_config: app_state.app_config.clone(),
+        });
+
+        let imap_sync = ImapSync::new(app_state_arc);
         imap_sync
             .initial_sync(
                 account.id,

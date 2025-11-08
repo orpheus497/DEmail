@@ -1,9 +1,13 @@
 <script lang="ts">
   import { mailbox } from "$lib/stores/mailboxStore";
   import { onMount } from "svelte";
-  import { Paperclip } from "lucide-svelte";
+  import { Paperclip, Download } from "lucide-svelte";
+  import { downloadAttachment } from "$lib/services/api";
+  import { save } from "@tauri-apps/api/dialog";
+  import Button from "$lib/components/ui/button/index.svelte";
 
   let currentMessageId: number | null = null;
+  let downloadingAttachmentId: number | null = null;
 
   $: {
     if ($mailbox.selectedMessage && $mailbox.selectedMessage.id !== currentMessageId) {
@@ -18,6 +22,27 @@
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  async function handleDownloadAttachment(attachmentId: number, filename: string) {
+    try {
+      downloadingAttachmentId = attachmentId;
+      const savePath = await save({
+        defaultPath: filename,
+        filters: [{
+          name: 'All Files',
+          extensions: ['*']
+        }]
+      });
+
+      if (savePath) {
+        await downloadAttachment(attachmentId, savePath);
+      }
+    } catch (error) {
+      console.error('Failed to download attachment:', error);
+    } finally {
+      downloadingAttachmentId = null;
+    }
   }
 </script>
 
@@ -63,6 +88,14 @@
                     <span class="text-xs text-muted-foreground">{formatFileSize(attachment.size_bytes)} • {attachment.mime_type}</span>
                   </div>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  on:click={() => handleDownloadAttachment(attachment.id, attachment.filename)}
+                  disabled={downloadingAttachmentId === attachment.id}
+                >
+                  <Download class="h-4 w-4" />
+                </Button>
               </div>
             {/each}
           </div>

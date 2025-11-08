@@ -10,11 +10,12 @@ use oauth2::{
 };
 use rusqlite::Connection;
 use std::collections::HashMap;
+use std::sync::Arc;
 use tauri::{AppHandle, Config, Manager, State};
 
 pub struct AppState {
-    pub db_conn: std::sync::Mutex<Connection>,
-    pub app_config: std::sync::Mutex<Config>,
+    pub db_conn: Arc<std::sync::Mutex<Connection>>,
+    pub app_config: Arc<std::sync::Mutex<Config>>,
 }
 
 #[derive(Debug)]

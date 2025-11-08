@@ -309,3 +309,103 @@ pub fn search_messages(
     let conn = app_state.db_conn.lock().unwrap();
     crate::core::cache::db::search_messages_fts(&conn, account_id, &query)
 }
+
+#[tauri::command]
+pub fn save_draft(
+    app_handle: AppHandle,
+    draft: crate::models::Draft,
+) -> Result<i64, DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let conn = app_state.db_conn.lock().unwrap();
+    crate::core::drafts::create_or_update_draft(&conn, &draft)
+}
+
+#[tauri::command]
+pub fn get_drafts(
+    app_handle: AppHandle,
+    account_id: i64,
+) -> Result<Vec<crate::models::Draft>, DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let conn = app_state.db_conn.lock().unwrap();
+    crate::core::drafts::load_drafts_for_account(&conn, account_id)
+}
+
+#[tauri::command]
+pub fn delete_draft(app_handle: AppHandle, draft_id: i64) -> Result<(), DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let conn = app_state.db_conn.lock().unwrap();
+    crate::core::drafts::remove_draft(&conn, draft_id)
+}
+
+#[tauri::command]
+pub fn save_signature(
+    app_handle: AppHandle,
+    signature: crate::models::EmailSignature,
+) -> Result<i64, DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let conn = app_state.db_conn.lock().unwrap();
+    crate::core::cache::db::save_signature(&conn, &signature)
+}
+
+#[tauri::command]
+pub fn get_signatures(
+    app_handle: AppHandle,
+    account_id: i64,
+) -> Result<Vec<crate::models::EmailSignature>, DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let conn = app_state.db_conn.lock().unwrap();
+    crate::core::cache::db::get_signatures(&conn, account_id)
+}
+
+#[tauri::command]
+pub fn delete_signature(app_handle: AppHandle, signature_id: i64) -> Result<(), DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let conn = app_state.db_conn.lock().unwrap();
+    crate::core::cache::db::delete_signature(&conn, signature_id)
+}
+
+#[tauri::command]
+pub fn download_attachment(
+    app_handle: AppHandle,
+    attachment_id: i64,
+    destination_path: String,
+) -> Result<(), DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let conn = app_state.db_conn.lock().unwrap();
+
+    let mut stmt = conn.prepare("SELECT * FROM attachments WHERE id = ?1")?;
+    let attachment = stmt.query_row([attachment_id], |row| {
+        Ok(crate::models::Attachment {
+            id: row.get(0)?,
+            message_id: row.get(1)?,
+            filename: row.get(2)?,
+            mime_type: row.get(3)?,
+            size_bytes: row.get(4)?,
+            local_path: row.get(5)?,
+        })
+    })?;
+
+    crate::core::attachments::save_attachment_to_disk(&conn, &attachment, &destination_path)
+}
+
+#[tauri::command]
+pub fn get_messages_paginated(
+    app_handle: AppHandle,
+    folder_id: i64,
+    limit: i64,
+    offset: i64,
+) -> Result<Vec<crate::models::MessageHeader>, DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let conn = app_state.db_conn.lock().unwrap();
+    crate::core::cache::db::get_messages_paginated(&conn, folder_id, limit, offset)
+}
+
+#[tauri::command]
+pub fn count_messages_in_folder(
+    app_handle: AppHandle,
+    folder_id: i64,
+) -> Result<i64, DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let conn = app_state.db_conn.lock().unwrap();
+    crate::core::cache::db::count_messages_in_folder(&conn, folder_id)
+}
