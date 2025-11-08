@@ -12,13 +12,17 @@
   import ComposeEmail from "$lib/components/ComposeEmail.svelte";
   import BulkActionToolbar from "$lib/components/BulkActionToolbar.svelte";
   import KeyboardShortcutsHelp from "$lib/components/KeyboardShortcutsHelp.svelte";
-  import { Settings, Pencil, RefreshCw, HelpCircle } from "lucide-svelte";
+  import DraftsManager from "$lib/components/DraftsManager.svelte";
+  import type { Draft } from "$lib/types";
+  import { Settings, Pencil, RefreshCw, HelpCircle, FileText } from "lucide-svelte";
 
   let composeOpen = false;
   let composeMode: 'compose' | 'reply' | 'replyAll' | 'forward' = 'compose';
   let composeMessageId: number | null = null;
+  let composeDraftId: number | null = null;
   let refreshing = false;
   let showKeyboardHelp = false;
+  let showDraftsManager = false;
   let messageListRef: MessageList;
   let searchBarRef: SearchBar;
   let selectedMessageIds: number[] = [];
@@ -83,6 +87,7 @@
 
   function handleEmailSent() {
     composeOpen = false;
+    composeDraftId = null;
   }
 
   function handleSelectionChange(event: CustomEvent<number[]>) {
@@ -94,6 +99,22 @@
       messageListRef.clearSelection();
       selectedMessageIds = [];
     }
+  }
+
+  // Phase 6: Draft management
+  function handleShowDrafts() {
+    if ($mailbox.selectedAccount) {
+      showDraftsManager = true;
+    }
+  }
+
+  function handleLoadDraft(event: CustomEvent<Draft>) {
+    const draft = event.detail;
+    composeDraftId = draft.id;
+    composeMode = 'compose';
+    composeMessageId = null;
+    composeOpen = true;
+    // ComposeEmail will load the draft via draftId prop
   }
 
   // Phase 3: Keyboard shortcuts
@@ -302,6 +323,16 @@
       <Button
         variant="outline"
         size="sm"
+        on:click={handleShowDrafts}
+        disabled={!canCompose}
+        title="View drafts"
+      >
+        <FileText class="h-4 w-4 mr-2" />
+        Drafts
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
         on:click={handleRefresh}
         disabled={!canRefresh}
       >
@@ -386,6 +417,7 @@
       bind:open={composeOpen}
       mode={composeMode}
       messageId={composeMessageId}
+      draftId={composeDraftId}
       on:sent={handleEmailSent}
     />
   {/if}
@@ -398,4 +430,13 @@
 
   <!-- Phase 3: Keyboard shortcuts help -->
   <KeyboardShortcutsHelp bind:visible={showKeyboardHelp} />
+
+  <!-- Phase 6: Drafts manager -->
+  {#if $mailbox.selectedAccount}
+    <DraftsManager
+      accountId={$mailbox.selectedAccount.id}
+      bind:visible={showDraftsManager}
+      on:loadDraft={handleLoadDraft}
+    />
+  {/if}
 </div>

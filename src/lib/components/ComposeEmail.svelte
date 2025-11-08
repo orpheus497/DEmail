@@ -4,7 +4,7 @@
   import Input from '$lib/components/ui/input/index.svelte';
   import Label from '$lib/components/ui/label/index.svelte';
   import ContactAutocomplete from '$lib/components/ContactAutocomplete.svelte';
-  import { sendEmail, prepareReply, prepareForward, getSignatures, saveDraft, deleteDraft } from '$lib/services/api';
+  import { sendEmail, prepareReply, prepareForward, getSignatures, saveDraft, deleteDraft, getDrafts } from '$lib/services/api';
   import type { EmailSignature, Draft } from '$lib/types';
   import { X, Save } from 'lucide-svelte';
 
@@ -33,8 +33,13 @@
   const dispatch = createEventDispatcher<{ sent: void; close: void }>();
 
   // Phase 6: Load default signature when opening compose dialog
-  $: if (open && mode === 'compose') {
+  $: if (open && mode === 'compose' && !draftId) {
     loadDefaultSignature();
+  }
+
+  // Phase 6: Load draft when draftId is provided
+  $: if (open && draftId) {
+    loadDraftData();
   }
 
   // Load reply/forward data when mode changes
@@ -70,6 +75,34 @@
     } catch (e) {
       console.error('Failed to load signature:', e);
       defaultSignature = null;
+    }
+  }
+
+  // Phase 6: Load draft data
+  async function loadDraftData() {
+    if (!draftId) return;
+
+    loading = true;
+    error = null;
+
+    try {
+      const drafts = await getDrafts(accountId);
+      const draft = drafts.find(d => d.id === draftId);
+
+      if (draft) {
+        to = draft.to_header || '';
+        cc = draft.cc_header || '';
+        bcc = draft.bcc_header || '';
+        subject = draft.subject || '';
+        body = draft.body_plain || '';
+        currentDraftId = draft.id;
+      } else {
+        error = 'Draft not found';
+      }
+    } catch (e) {
+      error = `Failed to load draft: ${String(e)}`;
+    } finally {
+      loading = false;
     }
   }
 
