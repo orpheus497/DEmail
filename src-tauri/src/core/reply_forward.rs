@@ -49,7 +49,9 @@ pub fn prepare_reply(message: &Message, reply_all: bool) -> Result<ReplyData, DE
         format!("Re: {}", message.subject)
     };
 
-    let original_body = message.body_plain.as_ref()
+    let original_body = message
+        .body_plain
+        .as_ref()
         .unwrap_or(&message.body_html.as_ref().unwrap_or(&String::from("")))
         .clone();
 
@@ -70,7 +72,9 @@ pub fn prepare_forward(message: &Message) -> Result<ForwardData, DEmailError> {
         format!("Fwd: {}", message.subject)
     };
 
-    let original_body = message.body_plain.as_ref()
+    let original_body = message
+        .body_plain
+        .as_ref()
         .unwrap_or(&message.body_html.as_ref().unwrap_or(&String::from("")))
         .clone();
 
@@ -94,10 +98,7 @@ fn quote_original_message(from: &str, date: i64, body: &str) -> String {
         .map(|dt| dt.format("%Y-%m-%d %H:%M:%S").to_string())
         .unwrap_or_else(|| "Unknown date".to_string());
 
-    let quoted_lines: Vec<String> = body
-        .lines()
-        .map(|line| format!("> {}", line))
-        .collect();
+    let quoted_lines: Vec<String> = body.lines().map(|line| format!("> {}", line)).collect();
 
     format!(
         "\n\nOn {}, {} wrote:\n{}",

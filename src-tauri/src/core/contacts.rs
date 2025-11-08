@@ -1,7 +1,7 @@
 // Contact management module - Extracts and manages email contacts for autocomplete
 
-use crate::error::DEmailError;
 use crate::core::validation;
+use crate::error::DEmailError;
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 
@@ -54,10 +54,7 @@ pub fn extract_and_save_contacts(
 }
 
 /// Searches contacts by email or name (for autocomplete)
-pub fn search_contacts(
-    conn: &Connection,
-    query: &str,
-) -> Result<Vec<Contact>, DEmailError> {
+pub fn search_contacts(conn: &Connection, query: &str) -> Result<Vec<Contact>, DEmailError> {
     let search_pattern = format!("%{}%", query.to_lowercase());
 
     let mut stmt = conn.prepare(
@@ -86,10 +83,7 @@ pub fn search_contacts(
 }
 
 /// Gets recently used contacts
-pub fn get_recent_contacts(
-    conn: &Connection,
-    limit: i64,
-) -> Result<Vec<Contact>, DEmailError> {
+pub fn get_recent_contacts(conn: &Connection, limit: i64) -> Result<Vec<Contact>, DEmailError> {
     let mut stmt = conn.prepare(
         "SELECT id, email, name, last_used, use_count FROM contacts
          ORDER BY last_used DESC
@@ -115,10 +109,7 @@ pub fn get_recent_contacts(
 }
 
 /// Gets frequently used contacts
-pub fn get_frequent_contacts(
-    conn: &Connection,
-    limit: i64,
-) -> Result<Vec<Contact>, DEmailError> {
+pub fn get_frequent_contacts(conn: &Connection, limit: i64) -> Result<Vec<Contact>, DEmailError> {
     let mut stmt = conn.prepare(
         "SELECT id, email, name, last_used, use_count FROM contacts
          ORDER BY use_count DESC, last_used DESC
@@ -152,11 +143,9 @@ fn save_or_update_contact(
 ) -> Result<(), DEmailError> {
     // Check if contact exists
     let existing: Option<i64> = conn
-        .query_row(
-            "SELECT id FROM contacts WHERE email = ?1",
-            [email],
-            |row| row.get(0),
-        )
+        .query_row("SELECT id FROM contacts WHERE email = ?1", [email], |row| {
+            row.get(0)
+        })
         .ok();
 
     if let Some(contact_id) = existing {

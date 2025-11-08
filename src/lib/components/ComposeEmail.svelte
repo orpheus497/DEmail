@@ -4,7 +4,15 @@
   import Input from '$lib/components/ui/input/index.svelte';
   import Label from '$lib/components/ui/label/index.svelte';
   import ContactAutocomplete from '$lib/components/ContactAutocomplete.svelte';
-  import { sendEmail, prepareReply, prepareForward, getSignatures, saveDraft, deleteDraft, getDrafts } from '$lib/services/api';
+  import {
+    sendEmail,
+    prepareReply,
+    prepareForward,
+    getSignatures,
+    saveDraft,
+    deleteDraft,
+    getDrafts,
+  } from '$lib/services/api';
   import type { EmailSignature, Draft } from '$lib/types';
   import { X, Save } from 'lucide-svelte';
 
@@ -66,7 +74,7 @@
   async function loadDefaultSignature() {
     try {
       const signatures = await getSignatures(accountId);
-      defaultSignature = signatures.find(sig => sig.is_default) || null;
+      defaultSignature = signatures.find((sig) => sig.is_default) || null;
 
       // Add signature to body if composing new email
       if (defaultSignature && !body) {
@@ -87,7 +95,7 @@
 
     try {
       const drafts = await getDrafts(accountId);
-      const draft = drafts.find(d => d.id === draftId);
+      const draft = drafts.find((d) => d.id === draftId);
 
       if (draft) {
         to = draft.to_header || '';
@@ -116,7 +124,7 @@
       // Load signature if not already loaded
       if (!defaultSignature) {
         const signatures = await getSignatures(accountId);
-        defaultSignature = signatures.find(sig => sig.is_default) || null;
+        defaultSignature = signatures.find((sig) => sig.is_default) || null;
       }
 
       if (mode === 'reply' || mode === 'replyAll') {
@@ -151,16 +159,20 @@
 
   function getTitle(): string {
     switch (mode) {
-      case 'reply': return 'Reply';
-      case 'replyAll': return 'Reply All';
-      case 'forward': return 'Forward';
-      default: return 'Compose Email';
+      case 'reply':
+        return 'Reply';
+      case 'replyAll':
+        return 'Reply All';
+      case 'forward':
+        return 'Forward';
+      default:
+        return 'Compose Email';
     }
   }
 
   // Phase 6: Auto-save draft
   async function handleAutoSaveDraft() {
-    if (sending || !to && !subject && !body) return;
+    if (sending || (!to && !subject && !body)) return;
 
     savingDraft = true;
     try {
@@ -297,80 +309,83 @@
             </div>
           {/if}
 
-        <form on:submit|preventDefault={handleSend} class="space-y-4">
-          <ContactAutocomplete
-            id="to"
-            label="To"
-            bind:value={to}
-            placeholder="recipient@example.com"
-            required={true}
-          />
-
-          <ContactAutocomplete
-            id="cc"
-            label="CC"
-            bind:value={cc}
-            placeholder="cc@example.com (optional)"
-          />
-
-          <ContactAutocomplete
-            id="bcc"
-            label="BCC"
-            bind:value={bcc}
-            placeholder="bcc@example.com (optional)"
-          />
-
-          <div>
-            <Label for="subject">Subject *</Label>
-            <Input
-              id="subject"
-              bind:value={subject}
-              placeholder="Email subject"
-              required
-              class="mt-1"
+          <form on:submit|preventDefault={handleSend} class="space-y-4">
+            <ContactAutocomplete
+              id="to"
+              label="To"
+              bind:value={to}
+              placeholder="recipient@example.com"
+              required={true}
             />
-          </div>
 
-          <div>
-            <Label for="body">Message</Label>
-            <textarea
-              id="body"
-              bind:value={body}
-              rows="12"
-              placeholder="Write your message here..."
-              class="mt-1 w-full p-3 border border-input rounded-md bg-background resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+            <ContactAutocomplete
+              id="cc"
+              label="CC"
+              bind:value={cc}
+              placeholder="cc@example.com (optional)"
             />
-          </div>
 
-          <div class="flex items-center justify-between pt-4">
-            <!-- Phase 6: Auto-save indicator -->
-            <div class="text-xs text-muted-foreground">
-              {#if savingDraft}
-                <span class="flex items-center gap-1">
-                  <Save class="h-3 w-3 animate-pulse" />
-                  Saving draft...
-                </span>
-              {:else if lastDraftSaveTime && mode === 'compose'}
-                <span>Draft saved {new Date(lastDraftSaveTime).toLocaleTimeString()}</span>
-              {/if}
+            <ContactAutocomplete
+              id="bcc"
+              label="BCC"
+              bind:value={bcc}
+              placeholder="bcc@example.com (optional)"
+            />
+
+            <div>
+              <Label for="subject">Subject *</Label>
+              <Input
+                id="subject"
+                bind:value={subject}
+                placeholder="Email subject"
+                required
+                class="mt-1"
+              />
             </div>
 
-            <div class="flex gap-2">
-              <Button type="button" variant="outline" on:click={handleClose}>
-                Cancel
-              </Button>
-              {#if mode === 'compose'}
-                <Button type="button" variant="secondary" on:click={handleManualSaveDraft} disabled={savingDraft}>
-                  <Save class="h-4 w-4 mr-2" />
-                  Save Draft
+            <div>
+              <Label for="body">Message</Label>
+              <textarea
+                id="body"
+                bind:value={body}
+                rows="12"
+                placeholder="Write your message here..."
+                class="mt-1 w-full p-3 border border-input rounded-md bg-background resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+
+            <div class="flex items-center justify-between pt-4">
+              <!-- Phase 6: Auto-save indicator -->
+              <div class="text-xs text-muted-foreground">
+                {#if savingDraft}
+                  <span class="flex items-center gap-1">
+                    <Save class="h-3 w-3 animate-pulse" />
+                    Saving draft...
+                  </span>
+                {:else if lastDraftSaveTime && mode === 'compose'}
+                  <span>Draft saved {new Date(lastDraftSaveTime).toLocaleTimeString()}</span>
+                {/if}
+              </div>
+
+              <div class="flex gap-2">
+                <Button type="button" variant="outline" on:click={handleClose}>Cancel</Button>
+                {#if mode === 'compose'}
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    on:click={handleManualSaveDraft}
+                    disabled={savingDraft}
+                  >
+                    <Save class="h-4 w-4 mr-2" />
+                    Save Draft
+                  </Button>
+                {/if}
+                <Button type="submit" disabled={sending}>
+                  {sending ? 'Sending...' : 'Send Email'}
                 </Button>
-              {/if}
-              <Button type="submit" disabled={sending}>
-                {sending ? 'Sending...' : 'Send Email'}
-              </Button>
+              </div>
             </div>
-          </div>
-        </form>
+          </form>
         {/if}
       </div>
     </div>

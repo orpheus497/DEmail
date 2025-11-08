@@ -61,12 +61,7 @@
     </div>
 
     <div class="flex items-center gap-1">
-      <Button
-        variant="ghost"
-        size="sm"
-        on:click={handlePreviousPage}
-        disabled={currentPage <= 1}
-      >
+      <Button variant="ghost" size="sm" on:click={handlePreviousPage} disabled={currentPage <= 1}>
         <ChevronLeft class="h-4 w-4" />
       </Button>
       <span class="text-sm text-muted-foreground px-2">

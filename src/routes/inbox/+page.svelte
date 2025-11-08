@@ -1,22 +1,22 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import { goto } from "$app/navigation";
-  import { mailbox } from "$lib/stores/mailboxStore";
-  import Button from "$lib/components/ui/button/index.svelte";
-  import * as Resizable from "$lib/components/ui/resizable";
-  import AccountSwitcher from "$lib/components/AccountSwitcher.svelte";
-  import FolderList from "$lib/components/FolderList.svelte";
-  import MessageList from "$lib/components/MessageList.svelte";
-  import MessageView from "$lib/components/MessageView.svelte";
-  import ThreadView from "$lib/components/ThreadView.svelte";
-  import SearchBar from "$lib/components/SearchBar.svelte";
-  import ComposeEmail from "$lib/components/ComposeEmail.svelte";
-  import BulkActionToolbar from "$lib/components/BulkActionToolbar.svelte";
-  import KeyboardShortcutsHelp from "$lib/components/KeyboardShortcutsHelp.svelte";
-  import DraftsManager from "$lib/components/DraftsManager.svelte";
-  import ThemeToggle from "$lib/components/ThemeToggle.svelte";
-  import type { Draft } from "$lib/types";
-  import { Settings, Pencil, RefreshCw, HelpCircle, FileText } from "lucide-svelte";
+  import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
+  import { mailbox } from '$lib/stores/mailboxStore';
+  import Button from '$lib/components/ui/button/index.svelte';
+  import * as Resizable from '$lib/components/ui/resizable';
+  import AccountSwitcher from '$lib/components/AccountSwitcher.svelte';
+  import FolderList from '$lib/components/FolderList.svelte';
+  import MessageList from '$lib/components/MessageList.svelte';
+  import MessageView from '$lib/components/MessageView.svelte';
+  import ThreadView from '$lib/components/ThreadView.svelte';
+  import SearchBar from '$lib/components/SearchBar.svelte';
+  import ComposeEmail from '$lib/components/ComposeEmail.svelte';
+  import BulkActionToolbar from '$lib/components/BulkActionToolbar.svelte';
+  import KeyboardShortcutsHelp from '$lib/components/KeyboardShortcutsHelp.svelte';
+  import DraftsManager from '$lib/components/DraftsManager.svelte';
+  import ThemeToggle from '$lib/components/ThemeToggle.svelte';
+  import type { Draft } from '$lib/types';
+  import { Settings, Pencil, RefreshCw, HelpCircle, FileText } from 'lucide-svelte';
 
   let composeOpen = false;
   let composeMode: 'compose' | 'reply' | 'replyAll' | 'forward' = 'compose';
@@ -282,7 +282,7 @@
 
       if (currentSelection.includes(messageId)) {
         // Already selected, deselect it
-        const newSelection = currentSelection.filter(id => id !== messageId);
+        const newSelection = currentSelection.filter((id) => id !== messageId);
         selectedMessageIds = newSelection;
       } else {
         // Not selected, select it
@@ -293,7 +293,9 @@
 
   function focusSearch() {
     // Find the search input and focus it
-    const searchInput = document.querySelector('input[type="search"], input[placeholder*="Search"]') as HTMLInputElement;
+    const searchInput = document.querySelector(
+      'input[type="search"], input[placeholder*="Search"]'
+    ) as HTMLInputElement;
     if (searchInput) {
       searchInput.focus();
     }
@@ -301,7 +303,7 @@
 
   function selectAllMessages() {
     if (messageListRef && $mailbox.messages.length > 0) {
-      selectedMessageIds = $mailbox.messages.map(m => m.id);
+      selectedMessageIds = $mailbox.messages.map((m) => m.id);
     }
   }
 
@@ -311,7 +313,7 @@
 
   // Update current message index when selection changes
   $: if ($mailbox.selectedMessage) {
-    currentMessageIndex = $mailbox.messages.findIndex(m => m.id === $mailbox.selectedMessage?.id);
+    currentMessageIndex = $mailbox.messages.findIndex((m) => m.id === $mailbox.selectedMessage?.id);
   }
 </script>
 
@@ -321,12 +323,7 @@
   <header class="border-b p-4 flex items-center justify-between">
     <h1 class="text-2xl font-bold">DEmail</h1>
     <div class="flex items-center gap-2">
-      <Button
-        variant="default"
-        size="sm"
-        on:click={handleCompose}
-        disabled={!canCompose}
-      >
+      <Button variant="default" size="sm" on:click={handleCompose} disabled={!canCompose}>
         <Pencil class="h-4 w-4 mr-2" />
         Compose
       </Button>
@@ -340,25 +337,20 @@
         <FileText class="h-4 w-4 mr-2" />
         Drafts
       </Button>
-      <Button
-        variant="outline"
-        size="sm"
-        on:click={handleRefresh}
-        disabled={!canRefresh}
-      >
+      <Button variant="outline" size="sm" on:click={handleRefresh} disabled={!canRefresh}>
         <RefreshCw class="h-4 w-4 mr-2 {refreshing ? 'animate-spin' : ''}" />
         Refresh
       </Button>
       <Button
         variant="ghost"
         size="sm"
-        on:click={() => showKeyboardHelp = !showKeyboardHelp}
+        on:click={() => (showKeyboardHelp = !showKeyboardHelp)}
         title="Keyboard shortcuts (?)"
       >
         <HelpCircle class="h-4 w-4" />
       </Button>
       <ThemeToggle />
-      <Button variant="outline" size="sm" on:click={() => goto("/settings")}>
+      <Button variant="outline" size="sm" on:click={() => goto('/settings')}>
         <Settings class="h-4 w-4 mr-2" />
         Settings
       </Button>
@@ -372,7 +364,7 @@
         <p class="text-muted-foreground">
           Get started by configuring your email provider in Settings
         </p>
-        <Button on:click={() => goto("/settings")}>Go to Settings</Button>
+        <Button on:click={() => goto('/settings')}>Go to Settings</Button>
       </div>
     </div>
   {:else}
@@ -398,10 +390,7 @@
             <SearchBar on:search={handleSearch} />
           </div>
           <div class="flex-1 overflow-auto">
-            <MessageList
-              bind:this={messageListRef}
-              on:selectionChange={handleSelectionChange}
-            />
+            <MessageList bind:this={messageListRef} on:selectionChange={handleSelectionChange} />
           </div>
         </div>
       </Resizable.Pane>
@@ -421,7 +410,9 @@
   {/if}
 
   {#if $mailbox.error}
-    <div class="fixed bottom-4 right-4 p-4 bg-destructive text-destructive-foreground rounded-md shadow-lg max-w-md">
+    <div
+      class="fixed bottom-4 right-4 p-4 bg-destructive text-destructive-foreground rounded-md shadow-lg max-w-md"
+    >
       Error: {$mailbox.error}
     </div>
   {/if}
@@ -438,10 +429,7 @@
   {/if}
 
   <!-- Phase 3: Bulk action toolbar -->
-  <BulkActionToolbar
-    {selectedMessageIds}
-    on:clearSelection={handleClearSelection}
-  />
+  <BulkActionToolbar {selectedMessageIds} on:clearSelection={handleClearSelection} />
 
   <!-- Phase 3: Keyboard shortcuts help -->
   <KeyboardShortcutsHelp bind:visible={showKeyboardHelp} />

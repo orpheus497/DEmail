@@ -36,7 +36,11 @@ pub fn apply_migrations(conn: &Connection) -> Result<(), DEmailError> {
     // Define all migrations
     let migrations: Vec<(i64, &str, fn(&Connection) -> Result<(), DEmailError>)> = vec![
         (1, "Initial schema", migration_v1_initial),
-        (2, "Add starring and threading", migration_v2_starring_threading),
+        (
+            2,
+            "Add starring and threading",
+            migration_v2_starring_threading,
+        ),
         (3, "Add contacts table", migration_v3_contacts),
     ];
 
@@ -98,10 +102,7 @@ fn migration_v2_starring_threading(conn: &Connection) -> Result<(), DEmailError>
     }
 
     // Add thread_id column to messages table
-    match conn.execute(
-        "ALTER TABLE messages ADD COLUMN thread_id INTEGER",
-        [],
-    ) {
+    match conn.execute("ALTER TABLE messages ADD COLUMN thread_id INTEGER", []) {
         Ok(_) => info!("Added thread_id column to messages table"),
         Err(e) => {
             warn!("Could not add thread_id column (may already exist): {}", e);

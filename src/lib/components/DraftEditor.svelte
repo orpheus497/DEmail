@@ -148,9 +148,7 @@
           </div>
 
           <div class="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" on:click={handleClose}>
-              Cancel
-            </Button>
+            <Button type="button" variant="outline" on:click={handleClose}>Cancel</Button>
             <Button type="submit" disabled={saving}>
               <Save class="h-4 w-4 mr-2" />
               {saving ? 'Saving...' : 'Save Draft'}

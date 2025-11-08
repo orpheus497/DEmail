@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { mailbox } from "$lib/stores/mailboxStore";
-  import type { MessageHeader } from "$lib/types";
-  import { Mail, MailOpen, Star, Trash2, Check, Loader2 } from "lucide-svelte";
-  import { createEventDispatcher } from "svelte";
+  import { mailbox } from '$lib/stores/mailboxStore';
+  import type { MessageHeader } from '$lib/types';
+  import { Mail, MailOpen, Star, Trash2, Check, Loader2 } from 'lucide-svelte';
+  import { createEventDispatcher } from 'svelte';
 
   const dispatch = createEventDispatcher<{ selectionChange: number[] }>();
 
@@ -44,7 +44,7 @@
 
     // Normal selection - clear multi-select and view message
     selectedMessageIds = new Set();
-    lastSelectedIndex = $mailbox.messages.findIndex(m => m.id === message.id);
+    lastSelectedIndex = $mailbox.messages.findIndex((m) => m.id === message.id);
     mailbox.selectMessage(message);
   }
 
@@ -55,12 +55,12 @@
       selectedMessageIds.add(message.id);
     }
     selectedMessageIds = selectedMessageIds; // Trigger reactivity
-    lastSelectedIndex = $mailbox.messages.findIndex(m => m.id === message.id);
+    lastSelectedIndex = $mailbox.messages.findIndex((m) => m.id === message.id);
     dispatch('selectionChange', Array.from(selectedMessageIds));
   }
 
   function handleRangeSelect(message: MessageHeader) {
-    const currentIndex = $mailbox.messages.findIndex(m => m.id === message.id);
+    const currentIndex = $mailbox.messages.findIndex((m) => m.id === message.id);
     const start = Math.min(lastSelectedIndex, currentIndex);
     const end = Math.max(lastSelectedIndex, currentIndex);
 
@@ -162,7 +162,10 @@
   {:else}
     {#each $mailbox.messages as message}
       <button
-        class="flex gap-2 items-start rounded-md border p-3 text-left text-sm hover:bg-accent transition-colors {$mailbox.selectedMessage?.id === message.id ? 'bg-accent' : ''} {selectedMessageIds.has(message.id) ? 'ring-2 ring-primary' : ''}"
+        class="flex gap-2 items-start rounded-md border p-3 text-left text-sm hover:bg-accent transition-colors {$mailbox
+          .selectedMessage?.id === message.id
+          ? 'bg-accent'
+          : ''} {selectedMessageIds.has(message.id) ? 'ring-2 ring-primary' : ''}"
         on:click={(e) => handleMessageSelect(message, e)}
         on:contextmenu={(e) => handleContextMenu(e, message)}
       >
@@ -193,9 +196,15 @@
               <Star class="h-4 w-4 text-yellow-500 fill-yellow-500 flex-shrink-0" />
             {/if}
           </div>
-          <div class="truncate {message.is_read ? 'text-muted-foreground' : 'font-semibold'}">{message.subject || '(No Subject)'}</div>
+          <div class="truncate {message.is_read ? 'text-muted-foreground' : 'font-semibold'}">
+            {message.subject || '(No Subject)'}
+          </div>
           <div class="text-xs text-muted-foreground">
-            {new Date(message.date * 1000).toLocaleDateString()} {new Date(message.date * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {new Date(message.date * 1000).toLocaleDateString()}
+            {new Date(message.date * 1000).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
           </div>
         </div>
       </button>
@@ -203,7 +212,9 @@
 
     <!-- Phase 5: Pagination info and loading indicator -->
     {#if $mailbox.totalMessages > 0}
-      <div class="flex flex-col items-center justify-center p-4 text-xs text-muted-foreground gap-2">
+      <div
+        class="flex flex-col items-center justify-center p-4 text-xs text-muted-foreground gap-2"
+      >
         <div>
           Showing {$mailbox.messages.length} of {$mailbox.totalMessages} messages
         </div>
@@ -213,9 +224,7 @@
             <span>Loading more messages...</span>
           </div>
         {:else if $mailbox.hasMore}
-          <div class="text-muted-foreground/70">
-            Scroll down to load more
-          </div>
+          <div class="text-muted-foreground/70">Scroll down to load more</div>
         {/if}
       </div>
     {/if}

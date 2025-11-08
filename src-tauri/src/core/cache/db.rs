@@ -1,7 +1,7 @@
 use crate::core::cache::schema::initialize_schema;
 use crate::core::migrations;
 use crate::error::DEmailError;
-use crate::models::{Attachment, AppSetting, Draft, EmailSignature, Folder, Message};
+use crate::models::{AppSetting, Attachment, Draft, EmailSignature, Folder, Message};
 use ammonia;
 use r2d2;
 use r2d2_sqlite::SqliteConnectionManager;
@@ -76,7 +76,9 @@ pub fn initialize_database(config: &Config) -> Result<Connection, DEmailError> {
 // ============================================================================
 
 pub fn save_folder(pool: &Pool, folder: &mut Folder) -> Result<(), DEmailError> {
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
 
     conn.execute(
         "INSERT INTO folders (account_id, name, path, parent_id, uid_validity) VALUES (?1, ?2, ?3, ?4, ?5)",
@@ -101,7 +103,9 @@ fn sanitize_html(html: &Option<String>) -> Option<String> {
 }
 
 pub fn save_message(pool: &Pool, message: &Message) -> Result<(), DEmailError> {
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
     let sanitized_html = sanitize_html(&message.body_html);
 
     conn.execute(
@@ -133,7 +137,9 @@ pub fn update_message_read_status(
     message_id: i64,
     is_read: bool,
 ) -> Result<(), DEmailError> {
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
 
     conn.execute(
         "UPDATE messages SET is_read = ?1 WHERE id = ?2",
@@ -143,14 +149,22 @@ pub fn update_message_read_status(
 }
 
 pub fn delete_message(pool: &Pool, message_id: i64) -> Result<(), DEmailError> {
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
 
     conn.execute("DELETE FROM messages WHERE id = ?1", [message_id])?;
     Ok(())
 }
 
-pub fn move_message(pool: &Pool, message_id: i64, target_folder_id: i64) -> Result<(), DEmailError> {
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+pub fn move_message(
+    pool: &Pool,
+    message_id: i64,
+    target_folder_id: i64,
+) -> Result<(), DEmailError> {
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
 
     conn.execute(
         "UPDATE messages SET folder_id = ?1 WHERE id = ?2",
@@ -165,7 +179,9 @@ pub fn get_messages_paginated(
     limit: i64,
     offset: i64,
 ) -> Result<Vec<crate::models::MessageHeader>, DEmailError> {
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
 
     let mut stmt = conn.prepare(
         "SELECT id, subject, from_header, date, is_read, has_attachments, is_starred
@@ -195,7 +211,9 @@ pub fn get_messages_paginated(
 }
 
 pub fn count_messages_in_folder(pool: &Pool, folder_id: i64) -> Result<i64, DEmailError> {
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
 
     let count: i64 = conn.query_row(
         "SELECT COUNT(*) FROM messages WHERE folder_id = ?1",
@@ -210,7 +228,9 @@ pub fn count_messages_in_folder(pool: &Pool, folder_id: i64) -> Result<i64, DEma
 // ============================================================================
 
 pub fn star_message(pool: &Pool, message_id: i64) -> Result<(), DEmailError> {
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
 
     conn.execute(
         "UPDATE messages SET is_starred = 1 WHERE id = ?1",
@@ -221,7 +241,9 @@ pub fn star_message(pool: &Pool, message_id: i64) -> Result<(), DEmailError> {
 }
 
 pub fn unstar_message(pool: &Pool, message_id: i64) -> Result<(), DEmailError> {
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
 
     conn.execute(
         "UPDATE messages SET is_starred = 0 WHERE id = ?1",
@@ -235,7 +257,9 @@ pub fn get_starred_messages(
     pool: &Pool,
     account_id: i64,
 ) -> Result<Vec<crate::models::MessageHeader>, DEmailError> {
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
 
     let mut stmt = conn.prepare(
         "SELECT id, subject, from_header, date, is_read, has_attachments, is_starred
@@ -272,7 +296,9 @@ pub fn bulk_mark_read(pool: &Pool, message_ids: &[i64]) -> Result<(), DEmailErro
         return Ok(());
     }
 
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
 
     // Build placeholders for IN clause
     let placeholders = message_ids
@@ -281,7 +307,10 @@ pub fn bulk_mark_read(pool: &Pool, message_ids: &[i64]) -> Result<(), DEmailErro
         .collect::<Vec<_>>()
         .join(",");
 
-    let query = format!("UPDATE messages SET is_read = 1 WHERE id IN ({})", placeholders);
+    let query = format!(
+        "UPDATE messages SET is_read = 1 WHERE id IN ({})",
+        placeholders
+    );
 
     let params: Vec<&dyn rusqlite::ToSql> = message_ids
         .iter()
@@ -298,7 +327,9 @@ pub fn bulk_delete_messages(pool: &Pool, message_ids: &[i64]) -> Result<(), DEma
         return Ok(());
     }
 
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
 
     let placeholders = message_ids
         .iter()
@@ -323,7 +354,9 @@ pub fn bulk_mark_unread(pool: &Pool, message_ids: &[i64]) -> Result<(), DEmailEr
         return Ok(());
     }
 
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
 
     let placeholders = message_ids
         .iter()
@@ -331,7 +364,10 @@ pub fn bulk_mark_unread(pool: &Pool, message_ids: &[i64]) -> Result<(), DEmailEr
         .collect::<Vec<_>>()
         .join(",");
 
-    let query = format!("UPDATE messages SET is_read = 0 WHERE id IN ({})", placeholders);
+    let query = format!(
+        "UPDATE messages SET is_read = 0 WHERE id IN ({})",
+        placeholders
+    );
 
     let params: Vec<&dyn rusqlite::ToSql> = message_ids
         .iter()
@@ -348,7 +384,9 @@ pub fn bulk_star_messages(pool: &Pool, message_ids: &[i64]) -> Result<(), DEmail
         return Ok(());
     }
 
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
 
     let placeholders = message_ids
         .iter()
@@ -356,7 +394,10 @@ pub fn bulk_star_messages(pool: &Pool, message_ids: &[i64]) -> Result<(), DEmail
         .collect::<Vec<_>>()
         .join(",");
 
-    let query = format!("UPDATE messages SET is_starred = 1 WHERE id IN ({})", placeholders);
+    let query = format!(
+        "UPDATE messages SET is_starred = 1 WHERE id IN ({})",
+        placeholders
+    );
 
     let params: Vec<&dyn rusqlite::ToSql> = message_ids
         .iter()
@@ -373,7 +414,9 @@ pub fn bulk_unstar_messages(pool: &Pool, message_ids: &[i64]) -> Result<(), DEma
         return Ok(());
     }
 
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
 
     let placeholders = message_ids
         .iter()
@@ -381,7 +424,10 @@ pub fn bulk_unstar_messages(pool: &Pool, message_ids: &[i64]) -> Result<(), DEma
         .collect::<Vec<_>>()
         .join(",");
 
-    let query = format!("UPDATE messages SET is_starred = 0 WHERE id IN ({})", placeholders);
+    let query = format!(
+        "UPDATE messages SET is_starred = 0 WHERE id IN ({})",
+        placeholders
+    );
 
     let params: Vec<&dyn rusqlite::ToSql> = message_ids
         .iter()
@@ -402,7 +448,9 @@ pub fn search_messages_fts(
     account_id: i64,
     query: &str,
 ) -> Result<Vec<crate::models::MessageHeader>, DEmailError> {
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
 
     let mut stmt = conn.prepare(
         "SELECT m.id, m.subject, m.from_header, m.date, m.is_read, m.has_attachments, m.is_starred
@@ -436,7 +484,9 @@ pub fn search_messages_fts(
 // ============================================================================
 
 pub fn save_attachment(pool: &Pool, attachment: &Attachment) -> Result<(), DEmailError> {
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
 
     conn.execute(
         "INSERT INTO attachments (message_id, filename, mime_type, size_bytes, local_path) VALUES (?1, ?2, ?3, ?4, ?5)",
@@ -455,7 +505,9 @@ pub fn get_attachments_for_message(
     pool: &Pool,
     message_id: i64,
 ) -> Result<Vec<Attachment>, DEmailError> {
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
 
     let mut stmt = conn.prepare(
         "SELECT id, message_id, filename, mime_type, size_bytes, local_path
@@ -480,8 +532,14 @@ pub fn get_attachments_for_message(
     Ok(attachments)
 }
 
-pub fn save_attachment_data(pool: &Pool, attachment_id: i64, data: &[u8]) -> Result<(), DEmailError> {
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+pub fn save_attachment_data(
+    pool: &Pool,
+    attachment_id: i64,
+    data: &[u8],
+) -> Result<(), DEmailError> {
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
 
     conn.execute(
         "INSERT OR REPLACE INTO attachment_data (attachment_id, data) VALUES (?1, ?2)",
@@ -490,8 +548,13 @@ pub fn save_attachment_data(pool: &Pool, attachment_id: i64, data: &[u8]) -> Res
     Ok(())
 }
 
-pub fn get_attachment_data(pool: &Pool, attachment_id: i64) -> Result<Option<Vec<u8>>, DEmailError> {
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+pub fn get_attachment_data(
+    pool: &Pool,
+    attachment_id: i64,
+) -> Result<Option<Vec<u8>>, DEmailError> {
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
 
     let result = conn.query_row(
         "SELECT data FROM attachment_data WHERE attachment_id = ?1",
@@ -511,7 +574,9 @@ pub fn get_attachment_data(pool: &Pool, attachment_id: i64) -> Result<Option<Vec
 // ============================================================================
 
 pub fn save_draft(pool: &Pool, draft: &Draft) -> Result<i64, DEmailError> {
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
     let now = chrono::Utc::now().timestamp();
 
     if draft.id == 0 {
@@ -550,7 +615,9 @@ pub fn save_draft(pool: &Pool, draft: &Draft) -> Result<i64, DEmailError> {
 }
 
 pub fn get_drafts(pool: &Pool, account_id: i64) -> Result<Vec<Draft>, DEmailError> {
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
 
     let mut stmt = conn.prepare(
         "SELECT id, account_id, to_addresses, cc_addresses, bcc_addresses, subject, body_plain, body_html, created_at, updated_at
@@ -580,7 +647,9 @@ pub fn get_drafts(pool: &Pool, account_id: i64) -> Result<Vec<Draft>, DEmailErro
 }
 
 pub fn delete_draft(pool: &Pool, draft_id: i64) -> Result<(), DEmailError> {
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
 
     conn.execute("DELETE FROM drafts WHERE id = ?1", [draft_id])?;
     Ok(())
@@ -591,7 +660,9 @@ pub fn delete_draft(pool: &Pool, draft_id: i64) -> Result<(), DEmailError> {
 // ============================================================================
 
 pub fn save_signature(pool: &Pool, signature: &EmailSignature) -> Result<i64, DEmailError> {
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
 
     if signature.is_default {
         conn.execute(
@@ -629,7 +700,9 @@ pub fn save_signature(pool: &Pool, signature: &EmailSignature) -> Result<i64, DE
 }
 
 pub fn get_signatures(pool: &Pool, account_id: i64) -> Result<Vec<EmailSignature>, DEmailError> {
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
 
     let mut stmt = conn.prepare(
         "SELECT id, account_id, name, content_html, content_plain, is_default
@@ -655,7 +728,9 @@ pub fn get_signatures(pool: &Pool, account_id: i64) -> Result<Vec<EmailSignature
 }
 
 pub fn delete_signature(pool: &Pool, signature_id: i64) -> Result<(), DEmailError> {
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
 
     conn.execute("DELETE FROM signatures WHERE id = ?1", [signature_id])?;
     Ok(())
@@ -666,7 +741,9 @@ pub fn delete_signature(pool: &Pool, signature_id: i64) -> Result<(), DEmailErro
 // ============================================================================
 
 pub fn save_setting(pool: &Pool, key: &str, value: &str) -> Result<(), DEmailError> {
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
 
     conn.execute(
         "INSERT OR REPLACE INTO settings (key, value) VALUES (?1, ?2)",
@@ -676,13 +753,13 @@ pub fn save_setting(pool: &Pool, key: &str, value: &str) -> Result<(), DEmailErr
 }
 
 pub fn get_setting(pool: &Pool, key: &str) -> Result<Option<String>, DEmailError> {
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
 
-    let result = conn.query_row(
-        "SELECT value FROM settings WHERE key = ?1",
-        [key],
-        |row| row.get(0),
-    );
+    let result = conn.query_row("SELECT value FROM settings WHERE key = ?1", [key], |row| {
+        row.get(0)
+    });
 
     match result {
         Ok(value) => Ok(Some(value)),
@@ -692,7 +769,9 @@ pub fn get_setting(pool: &Pool, key: &str) -> Result<Option<String>, DEmailError
 }
 
 pub fn get_all_settings(pool: &Pool) -> Result<Vec<AppSetting>, DEmailError> {
-    let conn = pool.get().map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
 
     let mut stmt = conn.prepare("SELECT key, value FROM settings")?;
 

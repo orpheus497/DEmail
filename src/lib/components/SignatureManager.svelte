@@ -133,11 +133,7 @@
               </p>
             </div>
             <div class="flex gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                on:click={() => handleEditSignature(signature)}
-              >
+              <Button variant="ghost" size="sm" on:click={() => handleEditSignature(signature)}>
                 Edit
               </Button>
               <Button
@@ -194,9 +190,7 @@
       </div>
 
       <div class="flex justify-end gap-2">
-        <Button variant="outline" on:click={handleCloseEditor}>
-          Cancel
-        </Button>
+        <Button variant="outline" on:click={handleCloseEditor}>Cancel</Button>
         <Button on:click={handleSaveSignature}>
           <Save class="h-4 w-4 mr-2" />
           Save Signature

@@ -1,18 +1,18 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import { goto } from "$app/navigation";
-  import { page } from "$app/stores";
-  import { handleCallback } from "$lib/services/api";
+  import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
+  import { handleCallback } from '$lib/services/api';
 
-  let status = "Processing authentication...";
+  let status = 'Processing authentication...';
   let error: string | null = null;
 
   onMount(async () => {
-    const code = $page.url.searchParams.get("code");
-    const state = $page.url.searchParams.get("state");
+    const code = $page.url.searchParams.get('code');
+    const state = $page.url.searchParams.get('state');
 
     if (!code || !state) {
-      error = "Missing authorization code or state parameter";
+      error = 'Missing authorization code or state parameter';
       return;
     }
 
@@ -21,7 +21,7 @@
       status = `Successfully added account: ${account.email_address}`;
 
       setTimeout(() => {
-        goto("/");
+        goto('/');
       }, 2000);
     } catch (e) {
       error = `Failed to complete authentication: ${e}`;
@@ -37,16 +37,12 @@
       <div class="p-4 border border-destructive rounded-md text-destructive">
         {error}
       </div>
-      <p class="text-sm text-muted-foreground">
-        Please close this window and try again.
-      </p>
+      <p class="text-sm text-muted-foreground">Please close this window and try again.</p>
     {:else}
       <div class="p-4 border rounded-md">
         {status}
       </div>
-      <p class="text-sm text-muted-foreground">
-        You will be redirected shortly...
-      </p>
+      <p class="text-sm text-muted-foreground">You will be redirected shortly...</p>
     {/if}
   </div>
 </div>

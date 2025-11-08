@@ -113,7 +113,7 @@ const createMailboxStore = () => {
 
   const markRead = async (messageId: number) => {
     try {
-      await import('../services/api').then(api => api.markMessageRead(messageId));
+      await import('../services/api').then((api) => api.markMessageRead(messageId));
       update((state) => {
         const updatedMessages = state.messages.map((msg) =>
           msg.id === messageId ? { ...msg, is_read: true } : msg
@@ -135,7 +135,7 @@ const createMailboxStore = () => {
 
   const markUnread = async (messageId: number) => {
     try {
-      await import('../services/api').then(api => api.markMessageUnread(messageId));
+      await import('../services/api').then((api) => api.markMessageUnread(messageId));
       update((state) => {
         const updatedMessages = state.messages.map((msg) =>
           msg.id === messageId ? { ...msg, is_read: false } : msg
@@ -170,9 +170,11 @@ const createMailboxStore = () => {
         return;
       }
 
-      await import('../services/api').then(api => api.refreshAccount(selectedAccount.id));
+      await import('../services/api').then((api) => api.refreshAccount(selectedAccount.id));
 
-      const folders = await import('../services/api').then(api => api.getFolders(selectedAccount.id));
+      const folders = await import('../services/api').then((api) =>
+        api.getFolders(selectedAccount.id)
+      );
       update((state) => ({ ...state, folders, loading: false }));
 
       const { selectedFolder } = await new Promise<MailboxStore>((resolve) => {
@@ -183,7 +185,9 @@ const createMailboxStore = () => {
       });
 
       if (selectedFolder) {
-        const messages = await import('../services/api').then(api => api.getMessages(selectedFolder.id));
+        const messages = await import('../services/api').then((api) =>
+          api.getMessages(selectedFolder.id)
+        );
         update((state) => ({ ...state, messages }));
       }
     } catch (error) {
@@ -219,7 +223,7 @@ const createMailboxStore = () => {
         return;
       }
 
-      const messages = await import('../services/api').then(api =>
+      const messages = await import('../services/api').then((api) =>
         api.searchMessages(selectedAccount.id, query)
       );
       update((state) => ({ ...state, messages, loading: false }));
@@ -230,7 +234,7 @@ const createMailboxStore = () => {
 
   const deleteMessage = async (messageId: number) => {
     try {
-      await import('../services/api').then(api => api.deleteMessage(messageId));
+      await import('../services/api').then((api) => api.deleteMessage(messageId));
       update((state) => {
         const updatedMessages = state.messages.filter((msg) => msg.id !== messageId);
         const updatedSelectedMessage =
@@ -248,7 +252,7 @@ const createMailboxStore = () => {
 
   const moveMessage = async (messageId: number, targetFolderId: number) => {
     try {
-      await import('../services/api').then(api => api.moveMessage(messageId, targetFolderId));
+      await import('../services/api').then((api) => api.moveMessage(messageId, targetFolderId));
       update((state) => {
         const updatedMessages = state.messages.filter((msg) => msg.id !== messageId);
         const updatedSelectedMessage =
@@ -382,9 +386,7 @@ const createMailboxStore = () => {
     try {
       await apiBulkDeleteMessages(messageIds);
       update((state) => {
-        const updatedMessages = state.messages.filter(
-          (msg) => !messageIds.includes(msg.id)
-        );
+        const updatedMessages = state.messages.filter((msg) => !messageIds.includes(msg.id));
         const updatedSelectedMessage =
           state.selectedMessage && messageIds.includes(state.selectedMessage.id)
             ? null
@@ -475,7 +477,12 @@ const createMailboxStore = () => {
       unsub();
     });
 
-    if (!currentState || !currentState.selectedFolder || currentState.loading || !currentState.hasMore) {
+    if (
+      !currentState ||
+      !currentState.selectedFolder ||
+      currentState.loading ||
+      !currentState.hasMore
+    ) {
       return;
     }
 

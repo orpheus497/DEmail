@@ -1,5 +1,7 @@
 use crate::core::accounts::get_refresh_token;
-use crate::core::cache::db::{save_folder, save_message, save_attachment, save_attachment_data, Pool};
+use crate::core::cache::db::{
+    save_attachment, save_attachment_data, save_folder, save_message, Pool,
+};
 use crate::core::contacts;
 use crate::core::threading;
 use crate::error::DEmailError;
@@ -123,9 +125,9 @@ impl ImapSync {
             .join(",");
         let fetch = session.uid_fetch(seq_set, "(RFC822)")?;
         let pool = &self.app_state.db_pool;
-        let conn = pool.get().map_err(|_| {
-            DEmailError::Database(rusqlite::Error::InvalidQuery)
-        })?;
+        let conn = pool
+            .get()
+            .map_err(|_| DEmailError::Database(rusqlite::Error::InvalidQuery))?;
 
         for msg in fetch.iter() {
             if let Some(body) = msg.body() {
@@ -138,9 +140,7 @@ impl ImapSync {
                         .to()
                         .map(|t| t.to_string())
                         .unwrap_or_default();
-                    let cc_str = parsed_message
-                        .cc()
-                        .map(|c| c.to_string());
+                    let cc_str = parsed_message.cc().map(|c| c.to_string());
 
                     let mut message = Message {
                         id: 0,
