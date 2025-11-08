@@ -1,7 +1,7 @@
 <script lang="ts">
   import { mailbox } from "$lib/stores/mailboxStore";
   import type { MessageHeader } from "$lib/types";
-  import { Mail, MailOpen, Star, Trash2, Check } from "lucide-svelte";
+  import { Mail, MailOpen, Star, Trash2, Check, Loader2 } from "lucide-svelte";
   import { createEventDispatcher } from "svelte";
 
   const dispatch = createEventDispatcher<{ selectionChange: number[] }>();
@@ -13,6 +13,10 @@
   // Phase 3: Multi-select functionality
   let selectedMessageIds = new Set<number>();
   let lastSelectedIndex = -1;
+
+  // Phase 5: Infinite scroll
+  let scrollContainer: HTMLDivElement;
+  let isLoadingMore = false;
 
   export function getSelectedMessages(): number[] {
     return Array.from(selectedMessageIds);
@@ -121,11 +125,32 @@
       closeContextMenu();
     }
   }
+
+  // Phase 5: Infinite scroll handler
+  async function handleScroll(event: Event) {
+    const target = event.target as HTMLDivElement;
+    const scrollThreshold = 200; // Load more when within 200px of bottom
+
+    if (
+      !isLoadingMore &&
+      $mailbox.hasMore &&
+      !$mailbox.loading &&
+      target.scrollHeight - target.scrollTop - target.clientHeight < scrollThreshold
+    ) {
+      isLoadingMore = true;
+      await mailbox.loadMoreMessages();
+      isLoadingMore = false;
+    }
+  }
 </script>
 
 <svelte:window on:click={handleClickOutside} />
 
-<div class="flex flex-col gap-1 p-2">
+<div
+  class="flex flex-col gap-1 p-2 h-full overflow-y-auto"
+  bind:this={scrollContainer}
+  on:scroll={handleScroll}
+>
   {#if $mailbox.messages.length === 0}
     <div class="flex items-center justify-center p-8 text-sm text-muted-foreground">
       {#if $mailbox.selectedFolder}
@@ -175,6 +200,25 @@
         </div>
       </button>
     {/each}
+
+    <!-- Phase 5: Pagination info and loading indicator -->
+    {#if $mailbox.totalMessages > 0}
+      <div class="flex flex-col items-center justify-center p-4 text-xs text-muted-foreground gap-2">
+        <div>
+          Showing {$mailbox.messages.length} of {$mailbox.totalMessages} messages
+        </div>
+        {#if isLoadingMore || $mailbox.loading}
+          <div class="flex items-center gap-2">
+            <Loader2 class="h-4 w-4 animate-spin" />
+            <span>Loading more messages...</span>
+          </div>
+        {:else if $mailbox.hasMore}
+          <div class="text-muted-foreground/70">
+            Scroll down to load more
+          </div>
+        {/if}
+      </div>
+    {/if}
   {/if}
 </div>
 

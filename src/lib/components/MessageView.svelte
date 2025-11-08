@@ -1,6 +1,6 @@
 <script lang="ts">
   import { mailbox } from "$lib/stores/mailboxStore";
-  import { onMount } from "svelte";
+  import { onMount, afterUpdate } from "svelte";
   import { Paperclip, Download, Star, MessageSquare } from "lucide-svelte";
   import { downloadAttachment, getThread } from "$lib/services/api";
   import { save } from "@tauri-apps/api/dialog";
@@ -13,6 +13,10 @@
   let threadInfo: Thread | null = null;
   let loadingThread = false;
   let showThreadView = false;
+
+  // Phase 5: Lazy loading for images
+  let messageBodyContainer: HTMLDivElement;
+  let imageObserver: IntersectionObserver;
 
   $: {
     if ($mailbox.selectedMessage && $mailbox.selectedMessage.id !== currentMessageId) {
@@ -83,6 +87,53 @@
       downloadingAttachmentId = null;
     }
   }
+
+  // Phase 5: Initialize lazy loading for images
+  onMount(() => {
+    imageObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const img = entry.target as HTMLImageElement;
+            const src = img.dataset.src;
+            if (src) {
+              img.src = src;
+              img.removeAttribute('data-src');
+              imageObserver.unobserve(img);
+            }
+          }
+        });
+      },
+      { rootMargin: '50px' }
+    );
+
+    return () => {
+      if (imageObserver) {
+        imageObserver.disconnect();
+      }
+    };
+  });
+
+  // Apply lazy loading to images after content updates
+  afterUpdate(() => {
+    if (messageBodyContainer && imageObserver) {
+      const images = messageBodyContainer.querySelectorAll('img[data-src]');
+      images.forEach((img) => {
+        imageObserver.observe(img);
+      });
+    }
+  });
+
+  // Process HTML content to add lazy loading attributes
+  function processHtmlForLazyLoading(html: string): string {
+    if (!html) return '';
+
+    // Replace img src with data-src for lazy loading
+    return html.replace(/<img\s+([^>]*?)src="([^"]+)"/gi, (match, attrs, src) => {
+      // Add a placeholder and move actual src to data-src
+      return `<img ${attrs}data-src="${src}" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%23eee' width='100' height='100'/%3E%3Ctext fill='%23999' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3ELoading...%3C/text%3E%3C/svg%3E"`;
+    });
+  }
 </script>
 
 <div class="p-4 h-full overflow-auto">
@@ -135,9 +186,9 @@
           </Button>
         </div>
       {/if}
-      <div class="prose prose-sm max-w-none">
+      <div class="prose prose-sm max-w-none" bind:this={messageBodyContainer}>
         {#if $mailbox.selectedMessage.body_html}
-          {@html $mailbox.selectedMessage.body_html}
+          {@html processHtmlForLazyLoading($mailbox.selectedMessage.body_html)}
         {:else if $mailbox.selectedMessage.body_plain}
           <pre class="whitespace-pre-wrap font-sans">{$mailbox.selectedMessage.body_plain}</pre>
         {:else}

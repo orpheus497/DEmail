@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onDestroy } from 'svelte';
   import { Search, X } from 'lucide-svelte';
   import Input from '$lib/components/ui/input/index.svelte';
   import Button from '$lib/components/ui/button/index.svelte';
@@ -8,19 +8,30 @@
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   const dispatch = createEventDispatcher<{ search: string }>();
 
+  // Phase 5: Optimized debouncing (300ms)
   function handleInput() {
     if (timeoutId) {
       clearTimeout(timeoutId);
     }
     timeoutId = setTimeout(() => {
       dispatch('search', query);
-    }, 500);
+    }, 300);
   }
 
   function clear() {
     query = '';
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
     dispatch('search', '');
   }
+
+  // Phase 5: Cleanup on destroy
+  onDestroy(() => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  });
 </script>
 
 <div class="relative flex items-center gap-2">

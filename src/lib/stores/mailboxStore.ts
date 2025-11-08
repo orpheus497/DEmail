@@ -5,6 +5,8 @@ import {
   getFolders,
   getMessages,
   getMessageDetails,
+  getMessagesPaginated,
+  countMessagesInFolder,
   starMessage as apiStarMessage,
   unstarMessage as apiUnstarMessage,
   getStarredMessages,
@@ -25,6 +27,11 @@ interface MailboxStore {
   selectedMessage: Message | null;
   loading: boolean;
   error: string | null;
+  // Pagination state
+  totalMessages: number;
+  currentPage: number;
+  pageSize: number;
+  hasMore: boolean;
 }
 
 const createMailboxStore = () => {
@@ -37,6 +44,10 @@ const createMailboxStore = () => {
     selectedMessage: null,
     loading: false,
     error: null,
+    totalMessages: 0,
+    currentPage: 0,
+    pageSize: 50,
+    hasMore: false,
   });
 
   const fetchAccounts = async () => {
@@ -455,6 +466,76 @@ const createMailboxStore = () => {
     }
   };
 
+  // ==================== Phase 5: Pagination ====================
+
+  const loadMoreMessages = async () => {
+    let currentState: MailboxStore | null = null;
+    const unsub = subscribe((state) => {
+      currentState = state;
+      unsub();
+    });
+
+    if (!currentState || !currentState.selectedFolder || currentState.loading || !currentState.hasMore) {
+      return;
+    }
+
+    update((state) => ({ ...state, loading: true, error: null }));
+
+    try {
+      const offset = currentState.currentPage * currentState.pageSize;
+      const newMessages = await getMessagesPaginated(
+        currentState.selectedFolder.id,
+        currentState.pageSize,
+        offset
+      );
+
+      update((state) => ({
+        ...state,
+        messages: [...state.messages, ...newMessages],
+        currentPage: state.currentPage + 1,
+        hasMore: newMessages.length === state.pageSize,
+        loading: false,
+      }));
+    } catch (error) {
+      update((state) => ({ ...state, error: String(error), loading: false }));
+    }
+  };
+
+  const selectFolderWithPagination = async (folder: Folder) => {
+    update((state) => ({
+      ...state,
+      selectedFolder: folder,
+      messages: [],
+      selectedMessage: null,
+      loading: true,
+      error: null,
+      currentPage: 0,
+      totalMessages: 0,
+      hasMore: false,
+    }));
+
+    try {
+      // Get total count
+      const total = await countMessagesInFolder(folder.id);
+
+      // Load first page
+      const pageSize = 50;
+      const messages = await getMessagesPaginated(folder.id, pageSize, 0);
+
+      update((state) => ({
+        ...state,
+        messages,
+        totalMessages: total,
+        currentPage: 1,
+        pageSize,
+        hasMore: messages.length === pageSize && total > pageSize,
+        loading: false,
+      }));
+    } catch (error) {
+      update((state) => ({ ...state, error: String(error), loading: false }));
+    }
+  };
+
   return {
     subscribe,
     fetchAccounts,
@@ -476,6 +557,8 @@ const createMailboxStore = () => {
     bulkStar,
     bulkUnstar,
     loadThreadMessages,
+    loadMoreMessages,
+    selectFolderWithPagination,
   };
 };
 

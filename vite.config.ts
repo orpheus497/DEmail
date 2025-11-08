@@ -17,4 +17,34 @@ export default defineConfig(async () => ({
   // 3. to make use of `TAURI_DEBUG` and other env variables
   // https://tauri.app/v1/api/config#buildconfig.beforedevcommand
   envPrefix: ["VITE_", "TAURI_"],
+
+  // Phase 5: Build optimizations
+  build: {
+    // Optimize chunk splitting
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Group vendor libraries
+          vendor: ['svelte', '@sveltejs/kit'],
+          // Separate UI components
+          ui: [
+            'lucide-svelte',
+            '$lib/components/ui/button/index.svelte',
+            '$lib/components/ui/input/index.svelte',
+          ],
+        },
+      },
+    },
+    // Increase chunk size warning limit (500kb)
+    chunkSizeWarningLimit: 500,
+    // Enable minification
+    minify: 'esbuild',
+    // Generate sourcemaps for production debugging
+    sourcemap: false,
+  },
+
+  // Optimize dependencies
+  optimizeDeps: {
+    include: ['svelte', '@sveltejs/kit'],
+  },
 }));

@@ -24,6 +24,12 @@
   let selectedMessageIds: number[] = [];
   let currentMessageIndex = -1;
 
+  // Phase 5: Memoized computed values
+  $: hasMessages = $mailbox.messages.length > 0;
+  $: hasSelectedAccount = !!$mailbox.selectedAccount;
+  $: canRefresh = hasSelectedAccount && !refreshing;
+  $: canCompose = hasSelectedAccount;
+
   onMount(() => {
     mailbox.fetchAccounts();
   });
@@ -98,10 +104,12 @@
       return;
     }
 
-    const messages = $mailbox.messages;
-    if (messages.length === 0 && event.key !== '?' && event.key !== 'c') {
+    // Phase 5: Use memoized value
+    if (!hasMessages && event.key !== '?' && event.key !== 'c') {
       return;
     }
+
+    const messages = $mailbox.messages;
 
     switch (event.key) {
       case '?':
@@ -286,7 +294,7 @@
         variant="default"
         size="sm"
         on:click={handleCompose}
-        disabled={!$mailbox.selectedAccount}
+        disabled={!canCompose}
       >
         <Pencil class="h-4 w-4 mr-2" />
         Compose
@@ -295,7 +303,7 @@
         variant="outline"
         size="sm"
         on:click={handleRefresh}
-        disabled={!$mailbox.selectedAccount || refreshing}
+        disabled={!canRefresh}
       >
         <RefreshCw class="h-4 w-4 mr-2 {refreshing ? 'animate-spin' : ''}" />
         Refresh

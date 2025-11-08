@@ -2,8 +2,9 @@
   import { mailbox } from "$lib/stores/mailboxStore";
   import type { Folder } from "$lib/types";
 
+  // Phase 5: Use pagination when selecting folders
   function handleFolderSelect(folder: Folder) {
-    mailbox.selectFolder(folder);
+    mailbox.selectFolderWithPagination(folder);
   }
 </script>
 
