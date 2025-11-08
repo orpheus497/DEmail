@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { mailbox } from "$lib/stores/mailboxStore";
-  import type { Message } from "$lib/types";
-  import { Paperclip, Star, ChevronDown, ChevronUp, X } from "lucide-svelte";
-  import Button from "$lib/components/ui/button/index.svelte";
-  import { createEventDispatcher } from "svelte";
+  import { mailbox } from '$lib/stores/mailboxStore';
+  import type { Message } from '$lib/types';
+  import { Paperclip, Star, ChevronDown, ChevronUp, X } from 'lucide-svelte';
+  import Button from '$lib/components/ui/button/index.svelte';
+  import { createEventDispatcher } from 'svelte';
 
   export let threadId: number;
   export let visible: boolean = false;
@@ -25,7 +25,7 @@
     error = null;
 
     try {
-      const { getThreadMessages } = await import("$lib/services/api");
+      const { getThreadMessages } = await import('$lib/services/api');
       messages = await getThreadMessages(threadId);
 
       // Expand the most recent message by default
@@ -64,11 +64,17 @@
     } else if (diffDays === 1) {
       return 'Yesterday ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     } else if (diffDays < 7) {
-      return date.toLocaleDateString([], { weekday: 'short' }) + ' ' +
-             date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return (
+        date.toLocaleDateString([], { weekday: 'short' }) +
+        ' ' +
+        date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      );
     } else {
-      return date.toLocaleDateString() + ' ' +
-             date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return (
+        date.toLocaleDateString() +
+        ' ' +
+        date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      );
     }
   }
 
@@ -80,9 +86,7 @@
     }
 
     // Update local state
-    messages = messages.map(m =>
-      m.id === messageId ? { ...m, is_starred: !isStarred } : m
-    );
+    messages = messages.map((m) => (m.id === messageId ? { ...m, is_starred: !isStarred } : m));
   }
 </script>
 
@@ -96,7 +100,9 @@
       on:click|stopPropagation
     >
       <div class="flex items-center justify-between p-6 border-b">
-        <h2 class="text-2xl font-bold">Conversation ({messages.length} message{messages.length !== 1 ? 's' : ''})</h2>
+        <h2 class="text-2xl font-bold">
+          Conversation ({messages.length} message{messages.length !== 1 ? 's' : ''})
+        </h2>
         <Button variant="ghost" size="sm" on:click={handleClose}>
           <X class="h-4 w-4" />
         </Button>
@@ -136,7 +142,9 @@
                         <Star class="h-4 w-4 text-yellow-500 fill-yellow-500 flex-shrink-0" />
                       {/if}
                       {#if isFirst}
-                        <span class="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">First</span>
+                        <span class="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded"
+                          >First</span
+                        >
                       {/if}
                       {#if isLast}
                         <span class="text-xs bg-accent px-2 py-0.5 rounded">Latest</span>
@@ -175,7 +183,9 @@
                         on:click={() => handleStarMessage(message.id, message.is_starred)}
                       >
                         <Star
-                          class="h-5 w-5 {message.is_starred ? 'text-yellow-500 fill-yellow-500' : ''}"
+                          class="h-5 w-5 {message.is_starred
+                            ? 'text-yellow-500 fill-yellow-500'
+                            : ''}"
                         />
                       </Button>
                     </div>
@@ -201,15 +211,21 @@
                         <div class="flex items-center gap-2 mb-2">
                           <Paperclip class="h-4 w-4" />
                           <span class="font-semibold text-sm">
-                            {message.attachments.length} Attachment{message.attachments.length > 1 ? 's' : ''}
+                            {message.attachments.length} Attachment{message.attachments.length > 1
+                              ? 's'
+                              : ''}
                           </span>
                         </div>
                         <div class="space-y-2">
                           {#each message.attachments as attachment}
-                            <div class="text-sm p-2 bg-background border rounded flex items-center gap-2">
+                            <div
+                              class="text-sm p-2 bg-background border rounded flex items-center gap-2"
+                            >
                               <Paperclip class="h-3 w-3 text-muted-foreground" />
                               <span>{attachment.filename}</span>
-                              <span class="text-muted-foreground">({Math.round(attachment.size_bytes / 1024)} KB)</span>
+                              <span class="text-muted-foreground"
+                                >({Math.round(attachment.size_bytes / 1024)} KB)</span
+                              >
                             </div>
                           {/each}
                         </div>

@@ -61,7 +61,10 @@ mod validation_integration_tests {
 
         // Valid filenames
         assert_eq!(sanitize_filename("report.pdf").unwrap(), "report.pdf");
-        assert_eq!(sanitize_filename("my-file_2024.docx").unwrap(), "my-file_2024.docx");
+        assert_eq!(
+            sanitize_filename("my-file_2024.docx").unwrap(),
+            "my-file_2024.docx"
+        );
 
         // Special characters that should be sanitized
         let result = sanitize_filename("file:name.txt");

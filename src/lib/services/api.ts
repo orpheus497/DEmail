@@ -59,10 +59,7 @@ export const sendEmail = (
   return invoke('send_email', { accountId, to, subject, body });
 };
 
-export const startExport = (
-  accountId: number,
-  destinationPath: string
-): Promise<void> => {
+export const startExport = (accountId: number, destinationPath: string): Promise<void> => {
   return invoke('start_export', { accountId, destinationPath });
 };
 
@@ -78,10 +75,7 @@ export const refreshAccount = (accountId: number): Promise<void> => {
   return invoke('refresh_account', { accountId });
 };
 
-export const searchMessages = (
-  accountId: number,
-  query: string
-): Promise<MessageHeader[]> => {
+export const searchMessages = (accountId: number, query: string): Promise<MessageHeader[]> => {
   return invoke('search_messages', { accountId, query });
 };
 
@@ -148,7 +142,10 @@ export const getAllSettings = (): Promise<{ key: string; value: string }[]> => {
   return invoke('get_all_settings');
 };
 
-export const prepareReply = (messageId: number, replyAll: boolean): Promise<{
+export const prepareReply = (
+  messageId: number,
+  replyAll: boolean
+): Promise<{
   to: string;
   cc: string | null;
   subject: string;
@@ -157,7 +154,9 @@ export const prepareReply = (messageId: number, replyAll: boolean): Promise<{
   return invoke('prepare_reply', { messageId, replyAll });
 };
 
-export const prepareForward = (messageId: number): Promise<{
+export const prepareForward = (
+  messageId: number
+): Promise<{
   subject: string;
   body_with_header: string;
 }> => {

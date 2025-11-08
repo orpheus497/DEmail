@@ -66,11 +66,17 @@
     } else if (diffDays === 1) {
       return 'Yesterday ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     } else if (diffDays < 7) {
-      return date.toLocaleDateString([], { weekday: 'short' }) + ' ' +
-             date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return (
+        date.toLocaleDateString([], { weekday: 'short' }) +
+        ' ' +
+        date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      );
     } else {
-      return date.toLocaleDateString() + ' ' +
-             date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return (
+        date.toLocaleDateString() +
+        ' ' +
+        date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      );
     }
   }
 
@@ -118,9 +124,7 @@
           <div class="flex flex-col items-center justify-center p-12 text-center">
             <FileText class="h-16 w-16 text-muted-foreground mb-4" />
             <h3 class="text-lg font-semibold mb-2">No drafts</h3>
-            <p class="text-sm text-muted-foreground">
-              Your saved drafts will appear here
-            </p>
+            <p class="text-sm text-muted-foreground">Your saved drafts will appear here</p>
           </div>
         {:else}
           <div class="space-y-3">

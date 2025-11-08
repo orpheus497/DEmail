@@ -79,18 +79,10 @@
                 </p>
               </div>
               <div class="flex gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  on:click={() => handleEditDraft(draft)}
-                >
+                <Button variant="ghost" size="sm" on:click={() => handleEditDraft(draft)}>
                   <FileEdit class="h-4 w-4" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  on:click={() => handleDeleteDraft(draft.id)}
-                >
+                <Button variant="ghost" size="sm" on:click={() => handleDeleteDraft(draft.id)}>
                   <Trash2 class="h-4 w-4" />
                 </Button>
               </div>

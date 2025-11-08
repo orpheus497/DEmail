@@ -17,7 +17,7 @@ pub fn export_account(
         "SELECT id, account_id, folder_id, imap_uid, message_id_header, in_reply_to_header,
          from_header, to_header, cc_header, subject, date, body_plain, body_html,
          has_attachments, is_read, is_starred, thread_id
-         FROM messages WHERE account_id = ?1"
+         FROM messages WHERE account_id = ?1",
     )?;
     let messages_iter = stmt.query_map([&account.id], |row| {
         Ok(Message {

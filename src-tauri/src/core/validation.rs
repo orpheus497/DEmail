@@ -132,9 +132,9 @@ pub fn sanitize_filename(filename: &str) -> Result<String, DEmailError> {
 /// Validates and sanitizes a file path to ensure it's within an allowed directory
 pub fn validate_path(path: &Path, allowed_base: &Path) -> Result<PathBuf, DEmailError> {
     // Canonicalize both paths to resolve any .. or symlinks
-    let canonical_base = allowed_base.canonicalize().map_err(|e| {
-        DEmailError::Validation(format!("Invalid base directory: {}", e))
-    })?;
+    let canonical_base = allowed_base
+        .canonicalize()
+        .map_err(|e| DEmailError::Validation(format!("Invalid base directory: {}", e)))?;
 
     let canonical_path = path.canonicalize().unwrap_or_else(|_| {
         // If path doesn't exist yet, try to construct it
@@ -280,7 +280,10 @@ mod tests {
     #[test]
     fn test_sanitize_filename() {
         assert_eq!(sanitize_filename("normal.txt").unwrap(), "normal.txt");
-        assert_eq!(sanitize_filename("file with spaces.pdf").unwrap(), "file with spaces.pdf");
+        assert_eq!(
+            sanitize_filename("file with spaces.pdf").unwrap(),
+            "file with spaces.pdf"
+        );
         assert!(sanitize_filename("../../../etc/passwd").is_err());
         assert!(sanitize_filename("").is_err());
         assert!(sanitize_filename("A".repeat(300)).is_err());

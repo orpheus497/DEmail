@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { mailbox } from "$lib/stores/mailboxStore";
-  import { onMount, afterUpdate } from "svelte";
-  import { Paperclip, Download, Star, MessageSquare } from "lucide-svelte";
-  import { downloadAttachment, getThread } from "$lib/services/api";
-  import { save } from "@tauri-apps/api/dialog";
-  import Button from "$lib/components/ui/button/index.svelte";
-  import ThreadView from "$lib/components/ThreadView.svelte";
-  import type { Thread } from "$lib/types";
+  import { mailbox } from '$lib/stores/mailboxStore';
+  import { onMount, afterUpdate } from 'svelte';
+  import { Paperclip, Download, Star, MessageSquare } from 'lucide-svelte';
+  import { downloadAttachment, getThread } from '$lib/services/api';
+  import { save } from '@tauri-apps/api/dialog';
+  import Button from '$lib/components/ui/button/index.svelte';
+  import ThreadView from '$lib/components/ThreadView.svelte';
+  import type { Thread } from '$lib/types';
 
   let currentMessageId: number | null = null;
   let downloadingAttachmentId: number | null = null;
@@ -72,10 +72,12 @@
       downloadingAttachmentId = attachmentId;
       const savePath = await save({
         defaultPath: filename,
-        filters: [{
-          name: 'All Files',
-          extensions: ['*']
-        }]
+        filters: [
+          {
+            name: 'All Files',
+            extensions: ['*'],
+          },
+        ],
       });
 
       if (savePath) {
@@ -144,7 +146,9 @@
           <div class="font-semibold text-lg">{$mailbox.selectedMessage.from_header}</div>
           <div class="text-sm text-muted-foreground">To: {$mailbox.selectedMessage.to_header}</div>
           {#if $mailbox.selectedMessage.cc_header}
-            <div class="text-sm text-muted-foreground">Cc: {$mailbox.selectedMessage.cc_header}</div>
+            <div class="text-sm text-muted-foreground">
+              Cc: {$mailbox.selectedMessage.cc_header}
+            </div>
           {/if}
         </div>
         <div class="flex items-center gap-2">
@@ -158,7 +162,9 @@
             aria-label={$mailbox.selectedMessage.is_starred ? 'Unstar message' : 'Star message'}
           >
             <Star
-              class="h-5 w-5 {$mailbox.selectedMessage.is_starred ? 'text-yellow-500 fill-yellow-500' : ''}"
+              class="h-5 w-5 {$mailbox.selectedMessage.is_starred
+                ? 'text-yellow-500 fill-yellow-500'
+                : ''}"
             />
           </Button>
         </div>
@@ -174,16 +180,13 @@
           <div class="flex items-center gap-2">
             <MessageSquare class="h-4 w-4 text-muted-foreground" />
             <span class="text-sm">
-              This message is part of a conversation with {threadInfo.message_count} message{threadInfo.message_count > 1 ? 's' : ''}
+              This message is part of a conversation with {threadInfo.message_count} message{threadInfo.message_count >
+              1
+                ? 's'
+                : ''}
             </span>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            on:click={handleViewThread}
-          >
-            View Conversation
-          </Button>
+          <Button variant="outline" size="sm" on:click={handleViewThread}>View Conversation</Button>
         </div>
       {/if}
       <div class="prose prose-sm max-w-none" bind:this={messageBodyContainer}>
@@ -200,7 +203,12 @@
         <div class="border-t pt-4">
           <div class="flex items-center gap-2 mb-2">
             <Paperclip class="h-4 w-4" />
-            <span class="font-semibold">{$mailbox.selectedMessage.attachments.length} Attachment{$mailbox.selectedMessage.attachments.length > 1 ? 's' : ''}</span>
+            <span class="font-semibold"
+              >{$mailbox.selectedMessage.attachments.length} Attachment{$mailbox.selectedMessage
+                .attachments.length > 1
+                ? 's'
+                : ''}</span
+            >
           </div>
           <div class="space-y-2">
             {#each $mailbox.selectedMessage.attachments as attachment}
@@ -209,7 +217,9 @@
                   <Paperclip class="h-3 w-3 text-muted-foreground" />
                   <div class="flex flex-col">
                     <span class="text-sm font-medium">{attachment.filename}</span>
-                    <span class="text-xs text-muted-foreground">{formatFileSize(attachment.size_bytes)} • {attachment.mime_type}</span>
+                    <span class="text-xs text-muted-foreground"
+                      >{formatFileSize(attachment.size_bytes)} • {attachment.mime_type}</span
+                    >
                   </div>
                 </div>
                 <Button
@@ -235,8 +245,5 @@
 
 <!-- Thread View Modal -->
 {#if $mailbox.selectedMessage?.thread_id}
-  <ThreadView
-    threadId={$mailbox.selectedMessage.thread_id}
-    bind:visible={showThreadView}
-  />
+  <ThreadView threadId={$mailbox.selectedMessage.thread_id} bind:visible={showThreadView} />
 {/if}

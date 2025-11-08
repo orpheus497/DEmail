@@ -9,9 +9,9 @@ pub fn create_account(
     display_name: &str,
     provider_type: &str,
 ) -> Result<Account, DEmailError> {
-    let conn = pool.get().map_err(|e| {
-        DEmailError::Database(rusqlite::Error::InvalidQuery)
-    })?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::InvalidQuery))?;
 
     conn.execute(
         "INSERT INTO accounts (email_address, display_name, provider_type) VALUES (?1, ?2, ?3)",
@@ -27,9 +27,9 @@ pub fn create_account(
 }
 
 pub fn get_accounts(pool: &Pool) -> Result<Vec<Account>, DEmailError> {
-    let conn = pool.get().map_err(|e| {
-        DEmailError::Database(rusqlite::Error::InvalidQuery)
-    })?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::InvalidQuery))?;
 
     let mut stmt =
         conn.prepare("SELECT id, email_address, display_name, provider_type FROM accounts")?;
@@ -50,9 +50,9 @@ pub fn get_accounts(pool: &Pool) -> Result<Vec<Account>, DEmailError> {
 }
 
 pub fn delete_account(pool: &Pool, account_id: i64) -> Result<(), DEmailError> {
-    let conn = pool.get().map_err(|e| {
-        DEmailError::Database(rusqlite::Error::InvalidQuery)
-    })?;
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::InvalidQuery))?;
 
     conn.execute("DELETE FROM accounts WHERE id = ?1", &[&account_id])?;
     // The database schema is set up with ON DELETE CASCADE, so all related data will be deleted automatically.

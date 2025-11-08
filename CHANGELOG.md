@@ -7,9 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2025-11-08
+
 ### Added
 
 **Core Email Features:**
+
 - Full-text search functionality using SQLite FTS5 virtual table for searching across message subjects, senders, recipients, and body text
 - Email composition modal component with To, CC, Subject, and Body fields, including email validation and send functionality
 - Draft management system with auto-save functionality, database persistence, and UI for managing draft emails
@@ -22,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Settings management system for storing application preferences in SQLite database
 
 **Database Enhancements:**
+
 - Database schema: `drafts` table for storing email drafts with full composition data
 - Database schema: `signatures` table for per-account email signatures with HTML/plain text content
 - Database schema: `settings` table for application-wide configuration key-value pairs
@@ -39,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - FTS5 virtual table `messages_fts` with automatic sync triggers (insert, update, delete) for real-time search indexing
 
 **Backend Modules:**
+
 - Core module: `src-tauri/src/core/drafts.rs` for draft creation, update, deletion, and auto-save logic
 - Core module: `src-tauri/src/core/attachments.rs` for attachment file operations, validation, and safety checks
 - Core module: `src-tauri/src/core/reply_forward.rs` for email reply and forward message preparation with quoted body formatting
@@ -60,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Database function: `get_attachments_for_message` for loading attachment metadata when viewing messages
 
 **Frontend Components:**
+
 - SearchBar component with debounced input (500ms delay) and clear button functionality
 - ComposeEmail component as modal dialog for email composition with form validation and error handling
 - DraftsList component for displaying saved drafts with edit and delete functionality
@@ -79,6 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ThemeToggle component integrated in inbox header for switching between light and dark modes with persistent settings storage
 
 **Frontend API & Store:**
+
 - Frontend API methods: `markMessageRead`, `markMessageUnread`, `refreshAccount`, `searchMessages` in services/api.ts
 - Frontend API methods: `saveDraft`, `getDrafts`, `deleteDraft` for draft management operations
 - Frontend API methods: `saveSignature`, `getSignatures`, `deleteSignature` for signature management operations
@@ -96,12 +103,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Type definitions: `Draft`, `EmailSignature`, `AppSetting` interfaces in types/index.ts
 
 **Routing & Pages:**
+
 - OAuth callback page at `/callback` route for handling authentication redirects
 - Inbox page at `/inbox` route with full 3-pane email client interface
 - Index exports for Select UI component for proper module resolution
 - Improved Settings page with account addition functionality and status feedback
 
 **Build & Development:**
+
 - Application icon files in all required formats (32x32.png, 128x128.png, 128x128@2x.png, icon.ico, icon.icns) for complete Tauri build support across all platforms (Windows, macOS, Linux)
 - Vitest configuration file (vitest.config.ts) for frontend unit testing setup with happy-dom environment
 - Test setup file (tests/frontend/setup.ts) with beforeAll, afterEach, and afterAll hooks for test environment initialization
@@ -111,11 +120,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Testing dependencies: vitest (^0.34.0), @testing-library/svelte (^4.0.0), @vitest/ui (^0.34.0), happy-dom (^12.0.0)
 
 **Dependencies:**
+
 - Rust dependencies: `mime_guess` (2.0) for MIME type detection in attachment handling
 - Rust dependencies: `regex` (1.10) for email address validation and pattern matching
 - Rust dependencies: `uuid` (1.6) with v4 and serde features for unique identifier generation
 
 **Modernization & Security (2025-11-08):**
+
 - Input validation system for all user inputs with email address validation using validator crate, path sanitization using sanitize-filename crate, and comprehensive length limits
 - Core validation module (src-tauri/src/core/validation.rs) with functions for validating emails, subjects, bodies, file paths, and preventing SQL injection patterns
 - Database migration system with version tracking in migrations table for schema evolution management without data loss
@@ -135,6 +146,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Phase 2 Implementation:** Updated Message and MessageHeader models to include is_starred and thread_id fields for starring and conversation threading support
 
 ### Fixed
+
 - **CRITICAL BUILD:** Fixed SvelteKit adapter configuration - added fallback: 'index.html' to adapter-static for proper SPA mode enabling production builds for Tauri desktop application
 - **CRITICAL BUILD:** Created src/routes/+layout.ts with prerender: false and ssr: false to disable server-side rendering for Tauri desktop application
 - Accessibility improvement: Added keyboard event handler (Escape key) and ARIA role to context menu in MessageList component for compliance with a11y guidelines
@@ -165,6 +177,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **BUG:** Updated frontend contact API methods (searchContacts, getRecentContacts, getFrequentContacts) to include accountId parameter matching backend signatures
 
 ### Changed
+
 - **Dependencies:** Added paneforge (^0.0.6) to package.json for resizable panel functionality (corrected from ^0.2.0)
 - **Dependencies:** Added testing framework dependencies: vitest, @testing-library/svelte, @vitest/ui, happy-dom for comprehensive frontend testing
 - **Dependencies:** Removed unused Rust crates from Cargo.toml: sha2, base64, rand, url, anyhow, regex for reduced binary size
@@ -208,6 +221,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2025-11-01
 
 ### Added
+
 - Initial implementation of DEmail application.
 - Core architecture with Tauri, Rust, and SvelteKit.
 - Account management with OAuth 2.0 for Google, Microsoft.
@@ -227,6 +241,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Standard Logging:** Implemented standard Rust logging with `env_logger` for comprehensive application diagnostics.
 
 ### Fixed
+
 - **CRITICAL:** Removed hardcoded OAuth credentials from the source code.
 - **CRITICAL:** Fixed XSS vulnerability by sanitizing HTML emails before rendering.
 - **CRITICAL:** Fixed TypeScript path configuration - corrected tsconfig.json to use `$lib` and `$lib/*` path mappings for proper SvelteKit module resolution.
@@ -244,6 +259,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **BUG:** Removed unused `paneforge` dependency that was causing peer dependency conflicts with Svelte 4.
 
 ### Changed
+
 - **Architecture:** Refactored the backend to use a shared `AppState` for managing the database pool and application configuration.
 - **Dependencies:** Added `ammonia` and `headless_chrome` to the backend. Added `vite`, `tailwindcss`, `shadcn-svelte`, and `bits-ui` to the frontend.
 - **Dependencies:** Removed `tauri-plugin-log` (Tauri 2.x only) in favor of standard `env_logger` for Tauri 1.x compatibility.

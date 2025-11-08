@@ -36,7 +36,9 @@ test('addAccount calls invoke with correct parameters', async () => {
 });
 
 test('getAccounts calls invoke', async () => {
-  const mockAccounts = [{ id: 1, email_address: 'test@example.com', display_name: 'Test', provider_type: 'google' }];
+  const mockAccounts = [
+    { id: 1, email_address: 'test@example.com', display_name: 'Test', provider_type: 'google' },
+  ];
   (invoke as any).mockResolvedValue(mockAccounts);
 
   const result = await getAccounts();
@@ -90,7 +92,11 @@ test('getMessagesPaginated calls invoke with correct parameters', async () => {
 
   const result = await getMessagesPaginated(1, 50, 0);
 
-  expect(invoke).toHaveBeenCalledWith('get_messages_paginated', { folderId: 1, limit: 50, offset: 0 });
+  expect(invoke).toHaveBeenCalledWith('get_messages_paginated', {
+    folderId: 1,
+    limit: 50,
+    offset: 0,
+  });
   expect(result).toEqual(mockMessages);
 });
 
@@ -108,5 +114,8 @@ test('downloadAttachment calls invoke with correct parameters', async () => {
 
   await downloadAttachment(1, '/path/to/save');
 
-  expect(invoke).toHaveBeenCalledWith('download_attachment', { attachmentId: 1, destinationPath: '/path/to/save' });
+  expect(invoke).toHaveBeenCalledWith('download_attachment', {
+    attachmentId: 1,
+    destinationPath: '/path/to/save',
+  });
 });

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { X } from "lucide-svelte";
-  import Button from "$lib/components/ui/button/index.svelte";
-  import { createEventDispatcher } from "svelte";
+  import { X } from 'lucide-svelte';
+  import Button from '$lib/components/ui/button/index.svelte';
+  import { createEventDispatcher } from 'svelte';
 
   const dispatch = createEventDispatcher<{ close: void }>();
 
@@ -19,42 +19,42 @@
 
   const shortcutGroups: ShortcutGroup[] = [
     {
-      title: "Navigation",
+      title: 'Navigation',
       shortcuts: [
-        { keys: "j / ↓", description: "Next message" },
-        { keys: "k / ↑", description: "Previous message" },
-        { keys: "Enter", description: "Open selected message" },
-        { keys: "g i", description: "Go to inbox" },
-        { keys: "/", description: "Search messages" },
+        { keys: 'j / ↓', description: 'Next message' },
+        { keys: 'k / ↑', description: 'Previous message' },
+        { keys: 'Enter', description: 'Open selected message' },
+        { keys: 'g i', description: 'Go to inbox' },
+        { keys: '/', description: 'Search messages' },
       ],
     },
     {
-      title: "Actions",
+      title: 'Actions',
       shortcuts: [
-        { keys: "s", description: "Star/unstar message" },
-        { keys: "e / #", description: "Delete message" },
-        { keys: "r", description: "Reply to message" },
-        { keys: "a", description: "Reply all" },
-        { keys: "f", description: "Forward message" },
-        { keys: "c", description: "Compose new message" },
+        { keys: 's', description: 'Star/unstar message' },
+        { keys: 'e / #', description: 'Delete message' },
+        { keys: 'r', description: 'Reply to message' },
+        { keys: 'a', description: 'Reply all' },
+        { keys: 'f', description: 'Forward message' },
+        { keys: 'c', description: 'Compose new message' },
       ],
     },
     {
-      title: "Selection",
+      title: 'Selection',
       shortcuts: [
-        { keys: "x", description: "Select/deselect message" },
-        { keys: "* a", description: "Select all messages" },
-        { keys: "* n", description: "Deselect all messages" },
-        { keys: "Ctrl/Cmd + Click", description: "Multi-select" },
-        { keys: "Shift + Click", description: "Range select" },
+        { keys: 'x', description: 'Select/deselect message' },
+        { keys: '* a', description: 'Select all messages' },
+        { keys: '* n', description: 'Deselect all messages' },
+        { keys: 'Ctrl/Cmd + Click', description: 'Multi-select' },
+        { keys: 'Shift + Click', description: 'Range select' },
       ],
     },
     {
-      title: "General",
+      title: 'General',
       shortcuts: [
-        { keys: "?", description: "Show keyboard shortcuts" },
-        { keys: "Escape", description: "Close dialog / Clear selection" },
-        { keys: "Ctrl/Cmd + R", description: "Refresh" },
+        { keys: '?', description: 'Show keyboard shortcuts' },
+        { keys: 'Escape', description: 'Close dialog / Clear selection' },
+        { keys: 'Ctrl/Cmd + R', description: 'Refresh' },
       ],
     },
   ];
@@ -65,7 +65,7 @@
   }
 
   function handleKeydown(event: KeyboardEvent) {
-    if (event.key === "Escape") {
+    if (event.key === 'Escape') {
       handleClose();
     }
   }
@@ -86,12 +86,7 @@
     >
       <div class="sticky top-0 bg-card border-b p-4 flex items-center justify-between">
         <h2 id="shortcuts-title" class="text-lg font-semibold">Keyboard Shortcuts</h2>
-        <Button
-          variant="ghost"
-          size="sm"
-          on:click={handleClose}
-          aria-label="Close"
-        >
+        <Button variant="ghost" size="sm" on:click={handleClose} aria-label="Close">
           <X class="h-4 w-4" />
         </Button>
       </div>
@@ -120,7 +115,8 @@
 
       <div class="border-t p-4 bg-muted/30">
         <p class="text-xs text-muted-foreground text-center">
-          Press <kbd class="px-1 py-0.5 text-xs font-mono bg-background border rounded">?</kbd> anytime to view this help
+          Press <kbd class="px-1 py-0.5 text-xs font-mono bg-background border rounded">?</kbd> anytime
+          to view this help
         </p>
       </div>
     </div>

@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { mailbox } from "$lib/stores/mailboxStore";
-  import { Mail, MailOpen, Star, Trash2, X } from "lucide-svelte";
-  import Button from "$lib/components/ui/button/index.svelte";
-  import { createEventDispatcher } from "svelte";
+  import { mailbox } from '$lib/stores/mailboxStore';
+  import { Mail, MailOpen, Star, Trash2, X } from 'lucide-svelte';
+  import Button from '$lib/components/ui/button/index.svelte';
+  import { createEventDispatcher } from 'svelte';
 
   const dispatch = createEventDispatcher<{ clearSelection: void }>();
 
@@ -40,7 +40,10 @@
   }
 
   async function handleDelete() {
-    if (selectedMessageIds.length > 0 && confirm(`Delete ${selectedCount} message${selectedCount > 1 ? 's' : ''}?`)) {
+    if (
+      selectedMessageIds.length > 0 &&
+      confirm(`Delete ${selectedCount} message${selectedCount > 1 ? 's' : ''}?`)
+    ) {
       await mailbox.bulkDelete(selectedMessageIds);
       dispatch('clearSelection');
     }
@@ -70,39 +73,19 @@
     </div>
 
     <div class="flex items-center gap-1">
-      <Button
-        variant="ghost"
-        size="sm"
-        on:click={handleMarkRead}
-        title="Mark as read"
-      >
+      <Button variant="ghost" size="sm" on:click={handleMarkRead} title="Mark as read">
         <MailOpen class="h-4 w-4" />
       </Button>
 
-      <Button
-        variant="ghost"
-        size="sm"
-        on:click={handleMarkUnread}
-        title="Mark as unread"
-      >
+      <Button variant="ghost" size="sm" on:click={handleMarkUnread} title="Mark as unread">
         <Mail class="h-4 w-4" />
       </Button>
 
-      <Button
-        variant="ghost"
-        size="sm"
-        on:click={handleStar}
-        title="Star messages"
-      >
+      <Button variant="ghost" size="sm" on:click={handleStar} title="Star messages">
         <Star class="h-4 w-4" />
       </Button>
 
-      <Button
-        variant="ghost"
-        size="sm"
-        on:click={handleUnstar}
-        title="Unstar messages"
-      >
+      <Button variant="ghost" size="sm" on:click={handleUnstar} title="Unstar messages">
         <Star class="h-4 w-4 fill-current" />
       </Button>
 

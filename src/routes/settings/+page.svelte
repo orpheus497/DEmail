@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import { goto } from "$app/navigation";
-  import Button from "$lib/components/ui/button/index.svelte";
-  import Input from "$lib/components/ui/input/index.svelte";
-  import Label from "$lib/components/ui/label/index.svelte";
-  import ThemeToggle from "$lib/components/ThemeToggle.svelte";
-  import SignatureManager from "$lib/components/SignatureManager.svelte";
+  import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
+  import Button from '$lib/components/ui/button/index.svelte';
+  import Input from '$lib/components/ui/input/index.svelte';
+  import Label from '$lib/components/ui/label/index.svelte';
+  import ThemeToggle from '$lib/components/ThemeToggle.svelte';
+  import SignatureManager from '$lib/components/SignatureManager.svelte';
   import {
     getOauthProviderConfigs,
     saveOauthProviderConfig,
@@ -13,17 +13,17 @@
     getAccounts,
     deleteAccount,
     startExport,
-  } from "$lib/services/api";
-  import type { OAuthProviderConfig, Account } from "$lib/types";
-  import { open } from "@tauri-apps/api/shell";
-  import { save } from "@tauri-apps/api/dialog";
-  import { Trash2, Download } from "lucide-svelte";
+  } from '$lib/services/api';
+  import type { OAuthProviderConfig, Account } from '$lib/types';
+  import { open } from '@tauri-apps/api/shell';
+  import { save } from '@tauri-apps/api/dialog';
+  import { Trash2, Download } from 'lucide-svelte';
 
   let providerConfigs: Record<string, OAuthProviderConfig> = {
-    google: { client_id: "", client_secret: "" },
-    microsoft: { client_id: "", client_secret: "" },
+    google: { client_id: '', client_secret: '' },
+    microsoft: { client_id: '', client_secret: '' },
   };
-  let emailToAdd = "";
+  let emailToAdd = '';
   let saveStatus: string | null = null;
   let accounts: Account[] = [];
   let selectedAccountForSignatures: Account | null = null;
@@ -39,7 +39,7 @@
         selectedAccountForSignatures = accounts[0];
       }
     } catch (e) {
-      console.error("Failed to load configs:", e);
+      console.error('Failed to load configs:', e);
     }
   });
 
@@ -63,18 +63,22 @@
     try {
       const authUrl = await addAccount(emailToAdd);
       await open(authUrl);
-      emailToAdd = "";
-      saveStatus = "Account authorization opened in browser";
-      setTimeout(() => saveStatus = null, 3000);
+      emailToAdd = '';
+      saveStatus = 'Account authorization opened in browser';
+      setTimeout(() => (saveStatus = null), 3000);
     } catch (e) {
-      console.error("Failed to add account:", e);
-      saveStatus = "Failed to add account";
+      console.error('Failed to add account:', e);
+      saveStatus = 'Failed to add account';
     }
   }
 
   // Phase 6: Account management
   async function handleDeleteAccount(accountId: number, email: string) {
-    if (!confirm(`Are you sure you want to delete the account "${email}"? This will remove all associated data.`)) {
+    if (
+      !confirm(
+        `Are you sure you want to delete the account "${email}"? This will remove all associated data.`
+      )
+    ) {
       return;
     }
 
@@ -84,8 +88,8 @@
       if (selectedAccountForSignatures?.id === accountId) {
         selectedAccountForSignatures = accounts.length > 0 ? accounts[0] : null;
       }
-      saveStatus = "Account deleted successfully";
-      setTimeout(() => saveStatus = null, 3000);
+      saveStatus = 'Account deleted successfully';
+      setTimeout(() => (saveStatus = null), 3000);
     } catch (e) {
       saveStatus = `Failed to delete account: ${String(e)}`;
     }
@@ -96,17 +100,19 @@
     try {
       const exportPath = await save({
         defaultPath: `${account.email}-backup-${new Date().toISOString().split('T')[0]}.json`,
-        filters: [{
-          name: 'JSON',
-          extensions: ['json']
-        }]
+        filters: [
+          {
+            name: 'JSON',
+            extensions: ['json'],
+          },
+        ],
       });
 
       if (exportPath) {
-        saveStatus = "Exporting mailbox data...";
+        saveStatus = 'Exporting mailbox data...';
         await startExport(account.id, exportPath);
-        saveStatus = "Export completed successfully!";
-        setTimeout(() => saveStatus = null, 5000);
+        saveStatus = 'Export completed successfully!';
+        setTimeout(() => (saveStatus = null), 5000);
       }
     } catch (e) {
       saveStatus = `Export failed: ${String(e)}`;
@@ -117,7 +123,7 @@
 <div class="p-8 max-w-3xl">
   <div class="flex items-center justify-between mb-8">
     <h1 class="text-3xl font-bold">Settings</h1>
-    <Button variant="outline" on:click={() => goto("/")}>Back to Inbox</Button>
+    <Button variant="outline" on:click={() => goto('/')}>Back to Inbox</Button>
   </div>
 
   {#if saveStatus}
@@ -129,9 +135,7 @@
   <div class="space-y-8">
     <section>
       <h2 class="text-xl font-semibold mb-4">Appearance</h2>
-      <p class="text-sm text-muted-foreground mb-4">
-        Customize the look and feel of DEmail.
-      </p>
+      <p class="text-sm text-muted-foreground mb-4">Customize the look and feel of DEmail.</p>
       <div class="border rounded-lg p-6">
         <div class="flex items-center justify-between">
           <div>
@@ -146,7 +150,8 @@
     <section>
       <h2 class="text-xl font-semibold mb-4">OAuth Provider Configuration</h2>
       <p class="text-sm text-muted-foreground mb-6">
-        Configure OAuth credentials for your email providers. You need to create OAuth applications in Google Cloud Console or Azure Portal.
+        Configure OAuth credentials for your email providers. You need to create OAuth applications
+        in Google Cloud Console or Azure Portal.
       </p>
 
       <div class="space-y-6">
@@ -172,7 +177,7 @@
                 class="mt-1"
               />
             </div>
-            <Button on:click={() => handleSave("google")}>Save Google Config</Button>
+            <Button on:click={() => handleSave('google')}>Save Google Config</Button>
           </div>
         </div>
 
@@ -198,7 +203,7 @@
                 class="mt-1"
               />
             </div>
-            <Button on:click={() => handleSave("microsoft")}>Save Microsoft Config</Button>
+            <Button on:click={() => handleSave('microsoft')}>Save Microsoft Config</Button>
           </div>
         </div>
       </div>
@@ -207,14 +212,11 @@
     <section>
       <h2 class="text-xl font-semibold mb-4">Add Email Account</h2>
       <p class="text-sm text-muted-foreground mb-4">
-        Add a new email account to DEmail. Make sure you've configured the OAuth provider above first.
+        Add a new email account to DEmail. Make sure you've configured the OAuth provider above
+        first.
       </p>
       <div class="flex gap-2">
-        <Input
-          bind:value={emailToAdd}
-          placeholder="email@example.com"
-          type="email"
-        />
+        <Input bind:value={emailToAdd} placeholder="email@example.com" type="email" />
         <Button on:click={handleAddAccount}>Add Account</Button>
       </div>
     </section>
@@ -269,7 +271,8 @@
       <section>
         <h2 class="text-xl font-semibold mb-4">Email Signatures</h2>
         <p class="text-sm text-muted-foreground mb-4">
-          Manage email signatures for your accounts. Signatures will be automatically added to your emails.
+          Manage email signatures for your accounts. Signatures will be automatically added to your
+          emails.
         </p>
 
         {#if accounts.length > 1}

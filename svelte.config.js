@@ -9,12 +9,12 @@ const config = {
       fallback: 'index.html',
       pages: 'dist',
       assets: 'dist',
-      strict: false
+      strict: false,
     }),
     alias: {
-      "@/*": "./src/lib/*"
-    }
-  }
+      '@/*': './src/lib/*',
+    },
+  },
 };
 
 export default config;

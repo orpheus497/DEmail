@@ -11,8 +11,12 @@ pub fn save_attachment_to_disk(
     attachment: &Attachment,
     destination_path: &str,
 ) -> Result<(), DEmailError> {
-    let data = get_attachment_data(pool, attachment.id)?
-        .ok_or_else(|| DEmailError::NotFound(format!("Attachment data not found for ID {}", attachment.id)))?;
+    let data = get_attachment_data(pool, attachment.id)?.ok_or_else(|| {
+        DEmailError::NotFound(format!(
+            "Attachment data not found for ID {}",
+            attachment.id
+        ))
+    })?;
 
     fs::write(destination_path, data)?;
     tracing::info!("Attachment saved to: {}", destination_path);
@@ -43,7 +47,7 @@ pub fn validate_attachment_safety(filename: &str, size_bytes: i64) -> Result<(),
         .unwrap_or("");
 
     const DANGEROUS_EXTENSIONS: &[&str] = &[
-        "exe", "bat", "cmd", "com", "pif", "scr", "vbs", "js", "jar", "msi", "dll", "sh"
+        "exe", "bat", "cmd", "com", "pif", "scr", "vbs", "js", "jar", "msi", "dll", "sh",
     ];
 
     if DANGEROUS_EXTENSIONS.contains(&extension.to_lowercase().as_str()) {

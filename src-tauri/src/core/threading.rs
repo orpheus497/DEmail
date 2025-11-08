@@ -8,10 +8,7 @@ use std::hash::{Hash, Hasher};
 
 /// Creates or updates a thread for a message based on In-Reply-To and References headers
 /// Uses subject-based threading with hash matching for grouping conversations
-pub fn create_or_update_thread(
-    conn: &Connection,
-    message: &Message,
-) -> Result<i64, DEmailError> {
+pub fn create_or_update_thread(conn: &Connection, message: &Message) -> Result<i64, DEmailError> {
     // Normalize subject by removing Re:, Fwd:, etc.
     let normalized_subject = normalize_subject(&message.subject);
     let subject_hash = calculate_subject_hash(&normalized_subject);
@@ -58,10 +55,7 @@ pub fn create_or_update_thread(
 }
 
 /// Gets all messages in a thread, ordered by date
-pub fn get_thread_messages(
-    conn: &Connection,
-    thread_id: i64,
-) -> Result<Vec<Message>, DEmailError> {
+pub fn get_thread_messages(conn: &Connection, thread_id: i64) -> Result<Vec<Message>, DEmailError> {
     let mut stmt = conn.prepare(
         "SELECT id, account_id, folder_id, imap_uid, message_id_header, from_header, to_header, cc_header,
          subject, date, body_plain, body_html, has_attachments, is_read, is_starred, thread_id
@@ -121,7 +115,11 @@ pub fn get_thread(conn: &Connection, thread_id: i64) -> Result<Thread, DEmailErr
 }
 
 /// Updates thread metadata when a new message is added
-fn update_thread(conn: &Connection, thread_id: i64, new_message_id: i64) -> Result<(), DEmailError> {
+fn update_thread(
+    conn: &Connection,
+    thread_id: i64,
+    new_message_id: i64,
+) -> Result<(), DEmailError> {
     let now = chrono::Utc::now().timestamp();
 
     conn.execute(

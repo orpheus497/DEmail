@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { searchContacts } from "$lib/services/api";
-  import type { Contact } from "$lib/types";
-  import { createEventDispatcher } from "svelte";
-  import Input from "$lib/components/ui/input/index.svelte";
-  import Label from "$lib/components/ui/label/index.svelte";
-  import { mailbox } from "$lib/stores/mailboxStore";
+  import { searchContacts } from '$lib/services/api';
+  import type { Contact } from '$lib/types';
+  import { createEventDispatcher } from 'svelte';
+  import Input from '$lib/components/ui/input/index.svelte';
+  import Label from '$lib/components/ui/label/index.svelte';
+  import { mailbox } from '$lib/stores/mailboxStore';
 
   export let value: string = '';
   export let label: string;
@@ -126,7 +126,9 @@
       {#each suggestions as contact, index}
         <button
           type="button"
-          class="w-full px-4 py-2 text-left hover:bg-accent flex flex-col {selectedIndex === index ? 'bg-accent' : ''}"
+          class="w-full px-4 py-2 text-left hover:bg-accent flex flex-col {selectedIndex === index
+            ? 'bg-accent'
+            : ''}"
           on:click={() => selectContact(contact)}
           role="option"
           aria-selected={selectedIndex === index}
