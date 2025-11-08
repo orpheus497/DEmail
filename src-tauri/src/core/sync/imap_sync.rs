@@ -1,5 +1,7 @@
 use crate::core::accounts::get_refresh_token;
-use crate::core::cache::db::{save_folder, save_message, save_attachment, save_attachment_data};
+use crate::core::cache::db::{save_folder, save_message, save_attachment, save_attachment_data, Pool};
+use crate::core::contacts;
+use crate::core::threading;
 use crate::error::DEmailError;
 use crate::models::{Attachment, Folder, Message};
 use imap::{
@@ -11,9 +13,8 @@ use native_tls::TlsStream;
 use oauth2::{
     basic::BasicClient, reqwest::async_http_client, AccessToken, RefreshToken, TokenResponse,
 };
-use rusqlite::Connection;
 use std::net::TcpStream;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use crate::AppState;
 
@@ -87,7 +88,7 @@ impl ImapSync {
         account_id: i64,
     ) -> Result<Vec<Folder>, DEmailError> {
         let mailboxes = session.list(Some(""), Some("*"))?;
-        let conn = self.app_state.db_conn.lock().unwrap();
+        let pool = &self.app_state.db_pool;
         let mut folders = Vec::new();
         for mailbox in mailboxes.iter() {
             let mut folder = Folder {
@@ -97,7 +98,7 @@ impl ImapSync {
                 path: mailbox.name().to_string(),
                 parent_id: None,
             };
-            save_folder(&conn, &mut folder)?;
+            save_folder(pool, &mut folder)?;
             folders.push(folder);
         }
         Ok(folders)
@@ -121,11 +122,26 @@ impl ImapSync {
             .collect::<Vec<_>>()
             .join(",");
         let fetch = session.uid_fetch(seq_set, "(RFC822)")?;
-        let conn = self.app_state.db_conn.lock().unwrap();
+        let pool = &self.app_state.db_pool;
+        let conn = pool.get().map_err(|_| {
+            DEmailError::Database(rusqlite::Error::InvalidQuery)
+        })?;
 
         for msg in fetch.iter() {
             if let Some(body) = msg.body() {
                 if let Ok(parsed_message) = ParsedMessage::parse(body) {
+                    let from_str = parsed_message
+                        .from()
+                        .map(|f| f.to_string())
+                        .unwrap_or_default();
+                    let to_str = parsed_message
+                        .to()
+                        .map(|t| t.to_string())
+                        .unwrap_or_default();
+                    let cc_str = parsed_message
+                        .cc()
+                        .map(|c| c.to_string());
+
                     let mut message = Message {
                         id: 0,
                         account_id,
@@ -135,29 +151,36 @@ impl ImapSync {
                             .message_id()
                             .unwrap_or_default()
                             .to_string(),
-                        from_header: parsed_message
-                            .from()
-                            .map(|f| f.to_string())
-                            .unwrap_or_default(),
-                        to_header: parsed_message
-                            .to()
-                            .map(|t| t.to_string())
-                            .unwrap_or_default(),
-                        cc_header: parsed_message
-                            .cc()
-                            .map(|c| c.to_string()),
+                        from_header: from_str.clone(),
+                        to_header: to_str.clone(),
+                        cc_header: cc_str.clone(),
                         subject: parsed_message.subject().unwrap_or_default().to_string(),
                         date: parsed_message.date().map_or(0, |d| d.timestamp()),
                         body_plain: parsed_message.body_text(0).map(|s| s.to_string()),
                         body_html: parsed_message.body_html(0).map(|s| s.to_string()),
                         has_attachments: !parsed_message.attachments().is_empty(),
                         is_read: false,
+                        is_starred: false,
+                        thread_id: None,
                         attachments: Vec::new(),
                     };
-                    save_message(&conn, &message)?;
+                    save_message(pool, &message)?;
 
                     let message_id = conn.last_insert_rowid();
                     message.id = message_id;
+
+                    // Phase 3: Threading integration (stub call for Phase 2)
+                    if let Ok(_thread_id) = threading::create_or_update_thread(&conn, &message) {
+                        // Thread created/updated successfully
+                    }
+
+                    // Phase 3: Contacts extraction (stub call for Phase 2)
+                    let _ = contacts::extract_and_save_contacts(
+                        &conn,
+                        &from_str,
+                        &to_str,
+                        cc_str.as_deref(),
+                    );
 
                     for attachment in parsed_message.attachments() {
                         let filename = attachment
@@ -181,11 +204,11 @@ impl ImapSync {
                             local_path: None,
                         };
 
-                        save_attachment(&conn, &att)?;
+                        save_attachment(pool, &att)?;
                         let attachment_id = conn.last_insert_rowid();
                         att.id = attachment_id;
 
-                        save_attachment_data(&conn, attachment_id, content)?;
+                        save_attachment_data(pool, attachment_id, content)?;
                     }
                 }
             }

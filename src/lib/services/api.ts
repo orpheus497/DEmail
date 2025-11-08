@@ -7,6 +7,8 @@ import type {
   OAuthProviderConfig,
   Draft,
   EmailSignature,
+  Contact,
+  Thread,
 } from '../types';
 
 export const addAccount = (emailAddress: string): Promise<string> => {
@@ -160,4 +162,64 @@ export const prepareForward = (messageId: number): Promise<{
   body_with_header: string;
 }> => {
   return invoke('prepare_forward', { messageId });
+};
+
+// ==================== Phase 3: Starring Messages ====================
+
+export const starMessage = (messageId: number): Promise<void> => {
+  return invoke('star_message', { messageId });
+};
+
+export const unstarMessage = (messageId: number): Promise<void> => {
+  return invoke('unstar_message', { messageId });
+};
+
+export const getStarredMessages = (accountId: number): Promise<MessageHeader[]> => {
+  return invoke('get_starred_messages', { accountId });
+};
+
+// ==================== Phase 3: Bulk Operations ====================
+
+export const bulkMarkRead = (messageIds: number[]): Promise<void> => {
+  return invoke('bulk_mark_read', { messageIds });
+};
+
+export const bulkMarkUnread = (messageIds: number[]): Promise<void> => {
+  return invoke('bulk_mark_unread', { messageIds });
+};
+
+export const bulkDeleteMessages = (messageIds: number[]): Promise<void> => {
+  return invoke('bulk_delete_messages', { messageIds });
+};
+
+export const bulkStarMessages = (messageIds: number[]): Promise<void> => {
+  return invoke('bulk_star_messages', { messageIds });
+};
+
+export const bulkUnstarMessages = (messageIds: number[]): Promise<void> => {
+  return invoke('bulk_unstar_messages', { messageIds });
+};
+
+// ==================== Phase 3: Contacts ====================
+
+export const searchContacts = (query: string): Promise<Contact[]> => {
+  return invoke('search_contacts', { query });
+};
+
+export const getRecentContacts = (limit: number): Promise<Contact[]> => {
+  return invoke('get_recent_contacts', { limit });
+};
+
+export const getFrequentContacts = (limit: number): Promise<Contact[]> => {
+  return invoke('get_frequent_contacts', { limit });
+};
+
+// ==================== Phase 3: Threading ====================
+
+export const getThreadMessages = (threadId: number): Promise<Message[]> => {
+  return invoke('get_thread_messages', { threadId });
+};
+
+export const getThread = (threadId: number): Promise<Thread> => {
+  return invoke('get_thread', { threadId });
 };

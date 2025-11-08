@@ -10,10 +10,29 @@
   import MessageView from "$lib/components/MessageView.svelte";
   import SearchBar from "$lib/components/SearchBar.svelte";
   import ComposeEmail from "$lib/components/ComposeEmail.svelte";
-  import { Settings, Pencil, RefreshCw } from "lucide-svelte";
+  import BulkActionToolbar from "$lib/components/BulkActionToolbar.svelte";
+  import KeyboardShortcutsHelp from "$lib/components/KeyboardShortcutsHelp.svelte";
+  import DraftsManager from "$lib/components/DraftsManager.svelte";
+  import type { Draft } from "$lib/types";
+  import { Settings, Pencil, RefreshCw, HelpCircle, FileText } from "lucide-svelte";
 
   let composeOpen = false;
+  let composeMode: 'compose' | 'reply' | 'replyAll' | 'forward' = 'compose';
+  let composeMessageId: number | null = null;
+  let composeDraftId: number | null = null;
   let refreshing = false;
+  let showKeyboardHelp = false;
+  let showDraftsManager = false;
+  let messageListRef: MessageList;
+  let searchBarRef: SearchBar;
+  let selectedMessageIds: number[] = [];
+  let currentMessageIndex = -1;
+
+  // Phase 5: Memoized computed values
+  $: hasMessages = $mailbox.messages.length > 0;
+  $: hasSelectedAccount = !!$mailbox.selectedAccount;
+  $: canRefresh = hasSelectedAccount && !refreshing;
+  $: canCompose = hasSelectedAccount;
 
   onMount(() => {
     mailbox.fetchAccounts();
@@ -21,6 +40,32 @@
 
   function handleCompose() {
     if ($mailbox.selectedAccount) {
+      composeMode = 'compose';
+      composeMessageId = null;
+      composeOpen = true;
+    }
+  }
+
+  function handleReply() {
+    if ($mailbox.selectedMessage) {
+      composeMode = 'reply';
+      composeMessageId = $mailbox.selectedMessage.id;
+      composeOpen = true;
+    }
+  }
+
+  function handleReplyAll() {
+    if ($mailbox.selectedMessage) {
+      composeMode = 'replyAll';
+      composeMessageId = $mailbox.selectedMessage.id;
+      composeOpen = true;
+    }
+  }
+
+  function handleForward() {
+    if ($mailbox.selectedMessage) {
+      composeMode = 'forward';
+      composeMessageId = $mailbox.selectedMessage.id;
       composeOpen = true;
     }
   }
@@ -42,8 +87,225 @@
 
   function handleEmailSent() {
     composeOpen = false;
+    composeDraftId = null;
+  }
+
+  function handleSelectionChange(event: CustomEvent<number[]>) {
+    selectedMessageIds = event.detail;
+  }
+
+  function handleClearSelection() {
+    if (messageListRef) {
+      messageListRef.clearSelection();
+      selectedMessageIds = [];
+    }
+  }
+
+  // Phase 6: Draft management
+  function handleShowDrafts() {
+    if ($mailbox.selectedAccount) {
+      showDraftsManager = true;
+    }
+  }
+
+  function handleLoadDraft(event: CustomEvent<Draft>) {
+    const draft = event.detail;
+    composeDraftId = draft.id;
+    composeMode = 'compose';
+    composeMessageId = null;
+    composeOpen = true;
+    // ComposeEmail will load the draft via draftId prop
+  }
+
+  // Phase 3: Keyboard shortcuts
+  function handleKeydown(event: KeyboardEvent) {
+    // Ignore if user is typing in an input field
+    const target = event.target as HTMLElement;
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+      return;
+    }
+
+    // Phase 5: Use memoized value
+    if (!hasMessages && event.key !== '?' && event.key !== 'c') {
+      return;
+    }
+
+    const messages = $mailbox.messages;
+
+    switch (event.key) {
+      case '?':
+        event.preventDefault();
+        showKeyboardHelp = !showKeyboardHelp;
+        break;
+
+      case 'c':
+        event.preventDefault();
+        handleCompose();
+        break;
+
+      case 'j':
+      case 'ArrowDown':
+        event.preventDefault();
+        navigateNextMessage();
+        break;
+
+      case 'k':
+      case 'ArrowUp':
+        event.preventDefault();
+        navigatePreviousMessage();
+        break;
+
+      case 's':
+        event.preventDefault();
+        toggleStarCurrentMessage();
+        break;
+
+      case 'r':
+        if (event.ctrlKey || event.metaKey) {
+          // Don't prevent default browser refresh
+          return;
+        }
+        event.preventDefault();
+        handleReply();
+        break;
+
+      case 'a':
+        event.preventDefault();
+        handleReplyAll();
+        break;
+
+      case 'f':
+        event.preventDefault();
+        handleForward();
+        break;
+
+      case 'e':
+      case '#':
+        event.preventDefault();
+        deleteCurrentMessage();
+        break;
+
+      case 'x':
+        event.preventDefault();
+        toggleSelectCurrentMessage();
+        break;
+
+      case '/':
+        event.preventDefault();
+        focusSearch();
+        break;
+
+      case '*':
+        // Wait for second key
+        event.preventDefault();
+        setTimeout(() => {
+          const handleSecondKey = (e: KeyboardEvent) => {
+            if (e.key === 'a') {
+              e.preventDefault();
+              selectAllMessages();
+            } else if (e.key === 'n') {
+              e.preventDefault();
+              deselectAllMessages();
+            }
+            window.removeEventListener('keydown', handleSecondKey);
+          };
+          window.addEventListener('keydown', handleSecondKey, { once: true });
+        }, 10);
+        break;
+
+      case 'Escape':
+        event.preventDefault();
+        if (showKeyboardHelp) {
+          showKeyboardHelp = false;
+        } else {
+          handleClearSelection();
+        }
+        break;
+    }
+  }
+
+  function navigateNextMessage() {
+    const messages = $mailbox.messages;
+    if (messages.length === 0) return;
+
+    if (currentMessageIndex < messages.length - 1) {
+      currentMessageIndex++;
+      mailbox.selectMessage(messages[currentMessageIndex]);
+    }
+  }
+
+  function navigatePreviousMessage() {
+    const messages = $mailbox.messages;
+    if (messages.length === 0) return;
+
+    if (currentMessageIndex > 0) {
+      currentMessageIndex--;
+      mailbox.selectMessage(messages[currentMessageIndex]);
+    } else if (currentMessageIndex === -1 && messages.length > 0) {
+      currentMessageIndex = 0;
+      mailbox.selectMessage(messages[0]);
+    }
+  }
+
+  function toggleStarCurrentMessage() {
+    if ($mailbox.selectedMessage) {
+      if ($mailbox.selectedMessage.is_starred) {
+        mailbox.unstarMessage($mailbox.selectedMessage.id);
+      } else {
+        mailbox.starMessage($mailbox.selectedMessage.id);
+      }
+    }
+  }
+
+  function deleteCurrentMessage() {
+    if ($mailbox.selectedMessage) {
+      if (confirm('Delete this message?')) {
+        mailbox.deleteMessage($mailbox.selectedMessage.id);
+      }
+    }
+  }
+
+  function toggleSelectCurrentMessage() {
+    if ($mailbox.selectedMessage && messageListRef) {
+      const messageId = $mailbox.selectedMessage.id;
+      const currentSelection = messageListRef.getSelectedMessages();
+
+      if (currentSelection.includes(messageId)) {
+        // Already selected, deselect it
+        const newSelection = currentSelection.filter(id => id !== messageId);
+        selectedMessageIds = newSelection;
+      } else {
+        // Not selected, select it
+        selectedMessageIds = [...currentSelection, messageId];
+      }
+    }
+  }
+
+  function focusSearch() {
+    // Find the search input and focus it
+    const searchInput = document.querySelector('input[type="search"], input[placeholder*="Search"]') as HTMLInputElement;
+    if (searchInput) {
+      searchInput.focus();
+    }
+  }
+
+  function selectAllMessages() {
+    if (messageListRef && $mailbox.messages.length > 0) {
+      selectedMessageIds = $mailbox.messages.map(m => m.id);
+    }
+  }
+
+  function deselectAllMessages() {
+    handleClearSelection();
+  }
+
+  // Update current message index when selection changes
+  $: if ($mailbox.selectedMessage) {
+    currentMessageIndex = $mailbox.messages.findIndex(m => m.id === $mailbox.selectedMessage?.id);
   }
 </script>
+
+<svelte:window on:keydown={handleKeydown} />
 
 <div class="h-screen flex flex-col">
   <header class="border-b p-4 flex items-center justify-between">
@@ -53,7 +315,7 @@
         variant="default"
         size="sm"
         on:click={handleCompose}
-        disabled={!$mailbox.selectedAccount}
+        disabled={!canCompose}
       >
         <Pencil class="h-4 w-4 mr-2" />
         Compose
@@ -61,11 +323,29 @@
       <Button
         variant="outline"
         size="sm"
+        on:click={handleShowDrafts}
+        disabled={!canCompose}
+        title="View drafts"
+      >
+        <FileText class="h-4 w-4 mr-2" />
+        Drafts
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
         on:click={handleRefresh}
-        disabled={!$mailbox.selectedAccount || refreshing}
+        disabled={!canRefresh}
       >
         <RefreshCw class="h-4 w-4 mr-2 {refreshing ? 'animate-spin' : ''}" />
         Refresh
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        on:click={() => showKeyboardHelp = !showKeyboardHelp}
+        title="Keyboard shortcuts (?)"
+      >
+        <HelpCircle class="h-4 w-4" />
       </Button>
       <Button variant="outline" size="sm" on:click={() => goto("/settings")}>
         <Settings class="h-4 w-4 mr-2" />
@@ -107,7 +387,10 @@
             <SearchBar on:search={handleSearch} />
           </div>
           <div class="flex-1 overflow-auto">
-            <MessageList />
+            <MessageList
+              bind:this={messageListRef}
+              on:selectionChange={handleSelectionChange}
+            />
           </div>
         </div>
       </Resizable.Pane>
@@ -132,7 +415,28 @@
     <ComposeEmail
       accountId={$mailbox.selectedAccount.id}
       bind:open={composeOpen}
+      mode={composeMode}
+      messageId={composeMessageId}
+      draftId={composeDraftId}
       on:sent={handleEmailSent}
+    />
+  {/if}
+
+  <!-- Phase 3: Bulk action toolbar -->
+  <BulkActionToolbar
+    {selectedMessageIds}
+    on:clearSelection={handleClearSelection}
+  />
+
+  <!-- Phase 3: Keyboard shortcuts help -->
+  <KeyboardShortcutsHelp bind:visible={showKeyboardHelp} />
+
+  <!-- Phase 6: Drafts manager -->
+  {#if $mailbox.selectedAccount}
+    <DraftsManager
+      accountId={$mailbox.selectedAccount.id}
+      bind:visible={showDraftsManager}
+      on:loadDraft={handleLoadDraft}
     />
   {/if}
 </div>

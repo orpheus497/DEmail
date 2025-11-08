@@ -16,8 +16,12 @@ use std::sync::Arc;
 use tauri::{Manager, RunEvent};
 
 fn main() {
-    // Initialize logging
-    env_logger::init();
+    // Initialize tracing for structured logging
+    tracing_subscriber::fmt()
+        .with_target(false)
+        .with_thread_ids(true)
+        .with_level(true)
+        .init();
 
     let context = tauri::generate_context!();
 
@@ -26,11 +30,11 @@ fn main() {
             let handle = app.handle();
 
             let app_config = app.config();
-            let db_conn =
-                db::initialize_database(&app_config).expect("Database initialization failed");
+            let db_pool =
+                db::initialize_pool(&app_config).expect("Database pool initialization failed");
 
             app.manage(AppState {
-                db_conn: Arc::new(std::sync::Mutex::new(db_conn)),
+                db_pool: Arc::new(db_pool),
                 app_config: Arc::new(std::sync::Mutex::new(app_config.clone())),
             });
 

@@ -1,6 +1,37 @@
 use rusqlite::{Connection, Result};
 
+/// Initializes the complete database schema for new installations
+/// For existing databases, migrations will handle schema updates
 pub fn initialize_schema(conn: &Connection) -> Result<()> {
+    // Core tables
+    create_accounts_table(conn)?;
+    create_folders_table(conn)?;
+    create_messages_table(conn)?;
+    create_attachments_table(conn)?;
+    create_message_flags_table(conn)?;
+
+    // FTS5 virtual table and triggers
+    create_fts_table(conn)?;
+    create_fts_triggers(conn)?;
+
+    // Feature tables
+    create_drafts_table(conn)?;
+    create_signatures_table(conn)?;
+    create_settings_table(conn)?;
+    create_attachment_data_table(conn)?;
+
+    // New tables for enhanced features
+    create_migrations_table(conn)?;
+    create_threads_table(conn)?;
+    create_contacts_table(conn)?;
+
+    // Indexes
+    create_indexes(conn)?;
+
+    Ok(())
+}
+
+fn create_accounts_table(conn: &Connection) -> Result<()> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS accounts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -10,7 +41,10 @@ pub fn initialize_schema(conn: &Connection) -> Result<()> {
         )",
         [],
     )?;
+    Ok(())
+}
 
+fn create_folders_table(conn: &Connection) -> Result<()> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS folders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -23,7 +57,10 @@ pub fn initialize_schema(conn: &Connection) -> Result<()> {
         )",
         [],
     )?;
+    Ok(())
+}
 
+fn create_messages_table(conn: &Connection) -> Result<()> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS messages (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -41,13 +78,19 @@ pub fn initialize_schema(conn: &Connection) -> Result<()> {
             body_html TEXT,
             has_attachments INTEGER NOT NULL DEFAULT 0,
             is_read INTEGER NOT NULL DEFAULT 0,
+            is_starred INTEGER NOT NULL DEFAULT 0,
+            thread_id INTEGER,
             FOREIGN KEY (account_id) REFERENCES accounts (id) ON DELETE CASCADE,
             FOREIGN KEY (folder_id) REFERENCES folders (id) ON DELETE CASCADE,
+            FOREIGN KEY (thread_id) REFERENCES threads (id) ON DELETE SET NULL,
             UNIQUE (account_id, folder_id, imap_uid)
         )",
         [],
     )?;
+    Ok(())
+}
 
+fn create_attachments_table(conn: &Connection) -> Result<()> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS attachments (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -60,7 +103,10 @@ pub fn initialize_schema(conn: &Connection) -> Result<()> {
         )",
         [],
     )?;
+    Ok(())
+}
 
+fn create_message_flags_table(conn: &Connection) -> Result<()> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS message_flags (
             message_id INTEGER NOT NULL,
@@ -70,7 +116,10 @@ pub fn initialize_schema(conn: &Connection) -> Result<()> {
         )",
         [],
     )?;
+    Ok(())
+}
 
+fn create_fts_table(conn: &Connection) -> Result<()> {
     conn.execute(
         "CREATE VIRTUAL TABLE IF NOT EXISTS messages_fts USING fts5(
             subject,
@@ -82,7 +131,10 @@ pub fn initialize_schema(conn: &Connection) -> Result<()> {
         )",
         [],
     )?;
+    Ok(())
+}
 
+fn create_fts_triggers(conn: &Connection) -> Result<()> {
     conn.execute(
         "CREATE TRIGGER IF NOT EXISTS messages_fts_insert AFTER INSERT ON messages BEGIN
             INSERT INTO messages_fts(rowid, subject, from_header, to_header, body_plain)
@@ -107,6 +159,10 @@ pub fn initialize_schema(conn: &Connection) -> Result<()> {
         [],
     )?;
 
+    Ok(())
+}
+
+fn create_drafts_table(conn: &Connection) -> Result<()> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS drafts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -123,7 +179,10 @@ pub fn initialize_schema(conn: &Connection) -> Result<()> {
         )",
         [],
     )?;
+    Ok(())
+}
 
+fn create_signatures_table(conn: &Connection) -> Result<()> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS signatures (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -136,7 +195,10 @@ pub fn initialize_schema(conn: &Connection) -> Result<()> {
         )",
         [],
     )?;
+    Ok(())
+}
 
+fn create_settings_table(conn: &Connection) -> Result<()> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS settings (
             key TEXT PRIMARY KEY,
@@ -144,7 +206,10 @@ pub fn initialize_schema(conn: &Connection) -> Result<()> {
         )",
         [],
     )?;
+    Ok(())
+}
 
+fn create_attachment_data_table(conn: &Connection) -> Result<()> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS attachment_data (
             attachment_id INTEGER PRIMARY KEY,
@@ -153,7 +218,58 @@ pub fn initialize_schema(conn: &Connection) -> Result<()> {
         )",
         [],
     )?;
+    Ok(())
+}
 
+fn create_migrations_table(conn: &Connection) -> Result<()> {
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS migrations (
+            version INTEGER PRIMARY KEY,
+            description TEXT NOT NULL,
+            applied_at INTEGER NOT NULL,
+            applied INTEGER NOT NULL DEFAULT 0
+        )",
+        [],
+    )?;
+    Ok(())
+}
+
+fn create_threads_table(conn: &Connection) -> Result<()> {
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS threads (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            subject_hash TEXT NOT NULL,
+            first_message_id INTEGER NOT NULL,
+            last_message_id INTEGER NOT NULL,
+            message_count INTEGER NOT NULL DEFAULT 1,
+            account_id INTEGER NOT NULL,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL,
+            FOREIGN KEY (first_message_id) REFERENCES messages (id) ON DELETE CASCADE,
+            FOREIGN KEY (last_message_id) REFERENCES messages (id) ON DELETE CASCADE,
+            FOREIGN KEY (account_id) REFERENCES accounts (id) ON DELETE CASCADE
+        )",
+        [],
+    )?;
+    Ok(())
+}
+
+fn create_contacts_table(conn: &Connection) -> Result<()> {
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS contacts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT NOT NULL UNIQUE,
+            name TEXT,
+            last_used INTEGER NOT NULL,
+            use_count INTEGER NOT NULL DEFAULT 1
+        )",
+        [],
+    )?;
+    Ok(())
+}
+
+fn create_indexes(conn: &Connection) -> Result<()> {
+    // Message indexes
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_messages_date ON messages(date DESC)",
         [],
@@ -166,6 +282,38 @@ pub fn initialize_schema(conn: &Connection) -> Result<()> {
 
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_messages_account ON messages(account_id)",
+        [],
+    )?;
+
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_messages_thread_id ON messages(thread_id)",
+        [],
+    )?;
+
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_messages_is_starred ON messages(is_starred)",
+        [],
+    )?;
+
+    // Thread indexes
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_threads_account ON threads(account_id)",
+        [],
+    )?;
+
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_threads_subject_hash ON threads(subject_hash)",
+        [],
+    )?;
+
+    // Contact indexes
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_contacts_email ON contacts(email)",
+        [],
+    )?;
+
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_contacts_last_used ON contacts(last_used DESC)",
         [],
     )?;
 

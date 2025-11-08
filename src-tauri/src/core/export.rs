@@ -13,7 +13,12 @@ pub fn export_account(
     let account_path = Path::new(destination_path).join(&account.email_address);
     fs::create_dir_all(&account_path)?;
 
-    let mut stmt = conn.prepare("SELECT * FROM messages WHERE account_id = ?1")?;
+    let mut stmt = conn.prepare(
+        "SELECT id, account_id, folder_id, imap_uid, message_id_header, in_reply_to_header,
+         from_header, to_header, cc_header, subject, date, body_plain, body_html,
+         has_attachments, is_read, is_starred, thread_id
+         FROM messages WHERE account_id = ?1"
+    )?;
     let messages_iter = stmt.query_map([&account.id], |row| {
         Ok(Message {
             id: row.get(0)?,
@@ -30,6 +35,8 @@ pub fn export_account(
             body_html: row.get(12)?,
             has_attachments: row.get(13)?,
             is_read: row.get(14)?,
+            is_starred: row.get(15)?,
+            thread_id: row.get(16)?,
             attachments: Vec::new(), // Will be loaded separately
         })
     })?;

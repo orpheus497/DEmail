@@ -4,13 +4,20 @@
   import Button from "$lib/components/ui/button/index.svelte";
   import Input from "$lib/components/ui/input/index.svelte";
   import Label from "$lib/components/ui/label/index.svelte";
+  import ThemeToggle from "$lib/components/ThemeToggle.svelte";
+  import SignatureManager from "$lib/components/SignatureManager.svelte";
   import {
     getOauthProviderConfigs,
     saveOauthProviderConfig,
     addAccount,
+    getAccounts,
+    deleteAccount,
+    startExport,
   } from "$lib/services/api";
-  import type { OAuthProviderConfig } from "$lib/types";
+  import type { OAuthProviderConfig, Account } from "$lib/types";
   import { open } from "@tauri-apps/api/shell";
+  import { save } from "@tauri-apps/api/dialog";
+  import { Trash2, Download } from "lucide-svelte";
 
   let providerConfigs: Record<string, OAuthProviderConfig> = {
     google: { client_id: "", client_secret: "" },
@@ -18,11 +25,19 @@
   };
   let emailToAdd = "";
   let saveStatus: string | null = null;
+  let accounts: Account[] = [];
+  let selectedAccountForSignatures: Account | null = null;
 
   onMount(async () => {
     try {
       const configs = await getOauthProviderConfigs();
       providerConfigs = { ...providerConfigs, ...configs };
+
+      // Load accounts for signature management
+      accounts = await getAccounts();
+      if (accounts.length > 0) {
+        selectedAccountForSignatures = accounts[0];
+      }
     } catch (e) {
       console.error("Failed to load configs:", e);
     }
@@ -48,8 +63,53 @@
     try {
       const authUrl = await addAccount(emailToAdd);
       await open(authUrl);
+      emailToAdd = "";
+      saveStatus = "Account authorization opened in browser";
+      setTimeout(() => saveStatus = null, 3000);
     } catch (e) {
       console.error("Failed to add account:", e);
+      saveStatus = "Failed to add account";
+    }
+  }
+
+  // Phase 6: Account management
+  async function handleDeleteAccount(accountId: number, email: string) {
+    if (!confirm(`Are you sure you want to delete the account "${email}"? This will remove all associated data.`)) {
+      return;
+    }
+
+    try {
+      await deleteAccount(accountId);
+      accounts = await getAccounts();
+      if (selectedAccountForSignatures?.id === accountId) {
+        selectedAccountForSignatures = accounts.length > 0 ? accounts[0] : null;
+      }
+      saveStatus = "Account deleted successfully";
+      setTimeout(() => saveStatus = null, 3000);
+    } catch (e) {
+      saveStatus = `Failed to delete account: ${String(e)}`;
+    }
+  }
+
+  // Phase 6: Export functionality
+  async function handleExport(account: Account) {
+    try {
+      const exportPath = await save({
+        defaultPath: `${account.email}-backup-${new Date().toISOString().split('T')[0]}.json`,
+        filters: [{
+          name: 'JSON',
+          extensions: ['json']
+        }]
+      });
+
+      if (exportPath) {
+        saveStatus = "Exporting mailbox data...";
+        await startExport(account.id, exportPath);
+        saveStatus = "Export completed successfully!";
+        setTimeout(() => saveStatus = null, 5000);
+      }
+    } catch (e) {
+      saveStatus = `Export failed: ${String(e)}`;
     }
   }
 </script>
@@ -67,6 +127,22 @@
   {/if}
 
   <div class="space-y-8">
+    <section>
+      <h2 class="text-xl font-semibold mb-4">Appearance</h2>
+      <p class="text-sm text-muted-foreground mb-4">
+        Customize the look and feel of DEmail.
+      </p>
+      <div class="border rounded-lg p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="font-medium">Theme</h3>
+            <p class="text-sm text-muted-foreground">Toggle between light and dark mode</p>
+          </div>
+          <ThemeToggle />
+        </div>
+      </div>
+    </section>
+
     <section>
       <h2 class="text-xl font-semibold mb-4">OAuth Provider Configuration</h2>
       <p class="text-sm text-muted-foreground mb-6">
@@ -142,5 +218,79 @@
         <Button on:click={handleAddAccount}>Add Account</Button>
       </div>
     </section>
+
+    <!-- Phase 6: Manage Accounts -->
+    {#if accounts.length > 0}
+      <section>
+        <h2 class="text-xl font-semibold mb-4">Manage Accounts</h2>
+        <p class="text-sm text-muted-foreground mb-4">
+          View, export, and manage your connected email accounts.
+        </p>
+
+        <div class="space-y-3">
+          {#each accounts as account}
+            <div class="border rounded-lg p-4">
+              <div class="flex items-center justify-between">
+                <div class="flex-1">
+                  <div class="font-medium">{account.email}</div>
+                  <div class="text-sm text-muted-foreground">
+                    Provider: {account.provider}
+                  </div>
+                </div>
+
+                <div class="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    on:click={() => handleExport(account)}
+                    title="Export mailbox data"
+                  >
+                    <Download class="h-4 w-4 mr-2" />
+                    Export
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    on:click={() => handleDeleteAccount(account.id, account.email)}
+                    title="Delete account"
+                  >
+                    <Trash2 class="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          {/each}
+        </div>
+      </section>
+    {/if}
+
+    <!-- Phase 6: Email Signatures -->
+    {#if accounts.length > 0}
+      <section>
+        <h2 class="text-xl font-semibold mb-4">Email Signatures</h2>
+        <p class="text-sm text-muted-foreground mb-4">
+          Manage email signatures for your accounts. Signatures will be automatically added to your emails.
+        </p>
+
+        {#if accounts.length > 1}
+          <div class="mb-4">
+            <Label for="account-select">Select Account</Label>
+            <select
+              id="account-select"
+              bind:value={selectedAccountForSignatures}
+              class="mt-1 w-full px-3 py-2 rounded-md border border-input bg-background"
+            >
+              {#each accounts as account}
+                <option value={account}>{account.email}</option>
+              {/each}
+            </select>
+          </div>
+        {/if}
+
+        {#if selectedAccountForSignatures}
+          <SignatureManager accountId={selectedAccountForSignatures.id} />
+        {/if}
+      </section>
+    {/if}
   </div>
 </div>

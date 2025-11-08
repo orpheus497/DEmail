@@ -25,6 +25,7 @@ pub struct MessageHeader {
     pub date: i64,
     pub is_read: bool,
     pub has_attachments: bool,
+    pub is_starred: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -43,6 +44,8 @@ pub struct Message {
     pub body_html: Option<String>,
     pub has_attachments: bool,
     pub is_read: bool,
+    pub is_starred: bool,
+    pub thread_id: Option<i64>,
     pub attachments: Vec<Attachment>,
 }
 
@@ -90,4 +93,25 @@ pub struct EmailSignature {
 pub struct AppSetting {
     pub key: String,
     pub value: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Thread {
+    pub id: i64,
+    pub subject_hash: String,
+    pub first_message_id: i64,
+    pub last_message_id: i64,
+    pub message_count: i64,
+    pub account_id: i64,
+    pub created_at: i64,
+    pub updated_at: i64,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Contact {
+    pub id: i64,
+    pub email: String,
+    pub name: Option<String>,
+    pub last_used: i64,
+    pub use_count: i64,
 }
