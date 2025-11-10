@@ -26,12 +26,8 @@ export default defineConfig({
         manualChunks: {
           // Group vendor libraries
           vendor: ['svelte', '@sveltejs/kit'],
-          // Separate UI components
-          ui: [
-            'lucide-svelte',
-            '$lib/components/ui/button/index.svelte',
-            '$lib/components/ui/input/index.svelte',
-          ],
+          // Separate icon library
+          icons: ['lucide-svelte'],
         },
       },
     },

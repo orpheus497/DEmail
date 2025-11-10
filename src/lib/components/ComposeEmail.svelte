@@ -98,9 +98,9 @@
       const draft = drafts.find((d) => d.id === draftId);
 
       if (draft) {
-        to = draft.to_header || '';
-        cc = draft.cc_header || '';
-        bcc = draft.bcc_header || '';
+        to = draft.to_addresses || '';
+        cc = draft.cc_addresses || '';
+        bcc = draft.bcc_addresses || '';
         subject = draft.subject || '';
         body = draft.body_plain || '';
         currentDraftId = draft.id;
