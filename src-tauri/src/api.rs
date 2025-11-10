@@ -564,10 +564,24 @@ pub fn get_starred_messages(
 // ============================================================================
 
 #[tauri::command]
+pub fn bulk_mark_read(app_handle: AppHandle, message_ids: Vec<i64>) -> Result<(), DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let pool = &app_state.db_pool;
+    crate::core::cache::db::bulk_mark_read(pool, &message_ids)
+}
+
+#[tauri::command]
 pub fn bulk_mark_unread(app_handle: AppHandle, message_ids: Vec<i64>) -> Result<(), DEmailError> {
     let app_state = app_handle.state::<AppState>();
     let pool = &app_state.db_pool;
     crate::core::cache::db::bulk_mark_unread(pool, &message_ids)
+}
+
+#[tauri::command]
+pub fn bulk_delete_messages(app_handle: AppHandle, message_ids: Vec<i64>) -> Result<(), DEmailError> {
+    let app_state = app_handle.state::<AppState>();
+    let pool = &app_state.db_pool;
+    crate::core::cache::db::bulk_delete_messages(pool, &message_ids)
 }
 
 #[tauri::command]

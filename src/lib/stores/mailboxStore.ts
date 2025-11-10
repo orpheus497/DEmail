@@ -474,8 +474,8 @@ const createMailboxStore = () => {
     let currentState: MailboxStore | null = null;
     const unsub = subscribe((state) => {
       currentState = state;
-      unsub();
     });
+    unsub();
 
     if (
       !currentState ||
