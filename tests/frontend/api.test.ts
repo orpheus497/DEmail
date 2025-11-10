@@ -77,7 +77,7 @@ test('saveDraft calls invoke with draft object', async () => {
 });
 
 test('getDrafts calls invoke with account ID', async () => {
-  const mockDrafts = [];
+  const mockDrafts: any[] = [];
   (invoke as any).mockResolvedValue(mockDrafts);
 
   const result = await getDrafts(1);
@@ -87,7 +87,7 @@ test('getDrafts calls invoke with account ID', async () => {
 });
 
 test('getMessagesPaginated calls invoke with correct parameters', async () => {
-  const mockMessages = [];
+  const mockMessages: any[] = [];
   (invoke as any).mockResolvedValue(mockMessages);
 
   const result = await getMessagesPaginated(1, 50, 0);

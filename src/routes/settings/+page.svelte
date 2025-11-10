@@ -99,7 +99,7 @@
   async function handleExport(account: Account) {
     try {
       const exportPath = await save({
-        defaultPath: `${account.email}-backup-${new Date().toISOString().split('T')[0]}.json`,
+        defaultPath: `${account.email_address}-backup-${new Date().toISOString().split('T')[0]}.json`,
         filters: [
           {
             name: 'JSON',
@@ -234,9 +234,9 @@
             <div class="border rounded-lg p-4">
               <div class="flex items-center justify-between">
                 <div class="flex-1">
-                  <div class="font-medium">{account.email}</div>
+                  <div class="font-medium">{account.email_address}</div>
                   <div class="text-sm text-muted-foreground">
-                    Provider: {account.provider}
+                    Provider: {account.provider_type}
                   </div>
                 </div>
 
@@ -253,7 +253,7 @@
                   <Button
                     variant="outline"
                     size="sm"
-                    on:click={() => handleDeleteAccount(account.id, account.email)}
+                    on:click={() => handleDeleteAccount(account.id, account.email_address)}
                     title="Delete account"
                   >
                     <Trash2 class="h-4 w-4" />
@@ -284,7 +284,7 @@
               class="mt-1 w-full px-3 py-2 rounded-md border border-input bg-background"
             >
               {#each accounts as account}
-                <option value={account}>{account.email}</option>
+                <option value={account}>{account.email_address}</option>
               {/each}
             </select>
           </div>

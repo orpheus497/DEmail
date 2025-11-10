@@ -6,6 +6,6 @@
   export { className as class };
 </script>
 
-<Pane class={cn('relative flex h-full w-full', className)} {...$$restProps} let:isCollapsed>
-  <slot {isCollapsed} />
+<Pane class={cn('relative flex h-full w-full', className)} {...$$restProps}>
+  <slot />
 </Pane>
