@@ -142,7 +142,7 @@
                           {draft.subject || '(No Subject)'}
                         </div>
                         <div class="text-sm text-muted-foreground truncate">
-                          To: {draft.to_header || 'Not specified'}
+                          To: {draft.to_addresses || 'Not specified'}
                         </div>
                       </div>
                     </div>
@@ -155,10 +155,10 @@
 
                     <div class="flex items-center gap-4 text-xs text-muted-foreground">
                       <span>Updated: {formatDate(draft.updated_at)}</span>
-                      {#if draft.cc_header}
-                        <span>• CC: {draft.cc_header}</span>
+                      {#if draft.cc_addresses}
+                        <span>• CC: {draft.cc_addresses}</span>
                       {/if}
-                      {#if draft.bcc_header}
+                      {#if draft.bcc_addresses}
                         <span>• BCC included</span>
                       {/if}
                     </div>
