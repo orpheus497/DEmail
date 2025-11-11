@@ -87,10 +87,22 @@ pub fn save_folder(pool: &Pool, folder: &mut Folder) -> Result<(), DEmailError> 
             folder.name,
             folder.path,
             folder.parent_id,
-            0 // Placeholder for uid_validity
+            folder.uid_validity
         ],
     )?;
     folder.id = conn.last_insert_rowid();
+    Ok(())
+}
+
+pub fn update_folder_uid_validity(pool: &Pool, folder_id: i64, uid_validity: Option<u32>) -> Result<(), DEmailError> {
+    let conn = pool
+        .get()
+        .map_err(|e| DEmailError::Database(rusqlite::Error::ToSqlConversionFailure(Box::new(e))))?;
+
+    conn.execute(
+        "UPDATE folders SET uid_validity = ?1 WHERE id = ?2",
+        rusqlite::params![uid_validity, folder_id],
+    )?;
     Ok(())
 }
 

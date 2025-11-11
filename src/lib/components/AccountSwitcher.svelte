@@ -5,13 +5,14 @@
   import Button from '$lib/components/ui/button/index.svelte';
   import { cn } from '$lib/utils';
 
+  let selectedValue: { value: string } | undefined = undefined;
+
   onMount(() => {
     mailbox.fetchAccounts();
   });
 
-  function handleAccountChange(value: string | undefined) {
-    if (!value) return;
-    const accountId = Number(value);
+  $: if (selectedValue) {
+    const accountId = Number(selectedValue.value);
     const account = $mailbox.accounts.find((acc) => acc.id === accountId);
     if (account) {
       mailbox.selectAccount(account);
@@ -19,7 +20,7 @@
   }
 </script>
 
-<Select.Root onValueChange={handleAccountChange}>
+<Select.Root bind:selected={selectedValue}>
   <Select.Trigger class="w-full">
     <Select.Value placeholder="Select an account" />
   </Select.Trigger>

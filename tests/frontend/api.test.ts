@@ -1,4 +1,5 @@
 import { expect, test, vi } from 'vitest';
+import type { Mock } from 'vitest';
 import {
   addAccount,
   getAccounts,
@@ -18,6 +19,7 @@ import {
   getMessagesPaginated,
   countMessagesInFolder,
 } from '../../src/lib/services/api';
+import type { Account, Draft, Message } from '../../src/lib/types';
 
 vi.mock('@tauri-apps/api/tauri', () => ({
   invoke: vi.fn(),
@@ -25,9 +27,11 @@ vi.mock('@tauri-apps/api/tauri', () => ({
 
 import { invoke } from '@tauri-apps/api/tauri';
 
+const mockInvoke = invoke as Mock;
+
 test('addAccount calls invoke with correct parameters', async () => {
   const mockEmail = 'test@example.com';
-  (invoke as any).mockResolvedValue('auth-url');
+  mockInvoke.mockResolvedValue('auth-url');
 
   const result = await addAccount(mockEmail);
 
@@ -36,10 +40,10 @@ test('addAccount calls invoke with correct parameters', async () => {
 });
 
 test('getAccounts calls invoke', async () => {
-  const mockAccounts = [
+  const mockAccounts: Account[] = [
     { id: 1, email_address: 'test@example.com', display_name: 'Test', provider_type: 'google' },
   ];
-  (invoke as any).mockResolvedValue(mockAccounts);
+  mockInvoke.mockResolvedValue(mockAccounts);
 
   const result = await getAccounts();
 
@@ -48,7 +52,7 @@ test('getAccounts calls invoke', async () => {
 });
 
 test('deleteAccount calls invoke with account ID', async () => {
-  (invoke as any).mockResolvedValue(undefined);
+  mockInvoke.mockResolvedValue(undefined);
 
   await deleteAccount(1);
 
@@ -56,7 +60,7 @@ test('deleteAccount calls invoke with account ID', async () => {
 });
 
 test('saveDraft calls invoke with draft object', async () => {
-  const mockDraft = {
+  const mockDraft: Draft = {
     id: 0,
     account_id: 1,
     to_addresses: 'test@example.com',
@@ -68,7 +72,7 @@ test('saveDraft calls invoke with draft object', async () => {
     created_at: 1234567890,
     updated_at: 1234567890,
   };
-  (invoke as any).mockResolvedValue(123);
+  mockInvoke.mockResolvedValue(123);
 
   const result = await saveDraft(mockDraft);
 
@@ -77,8 +81,8 @@ test('saveDraft calls invoke with draft object', async () => {
 });
 
 test('getDrafts calls invoke with account ID', async () => {
-  const mockDrafts: any[] = [];
-  (invoke as any).mockResolvedValue(mockDrafts);
+  const mockDrafts: Draft[] = [];
+  mockInvoke.mockResolvedValue(mockDrafts);
 
   const result = await getDrafts(1);
 
@@ -87,8 +91,8 @@ test('getDrafts calls invoke with account ID', async () => {
 });
 
 test('getMessagesPaginated calls invoke with correct parameters', async () => {
-  const mockMessages: any[] = [];
-  (invoke as any).mockResolvedValue(mockMessages);
+  const mockMessages: Message[] = [];
+  mockInvoke.mockResolvedValue(mockMessages);
 
   const result = await getMessagesPaginated(1, 50, 0);
 
@@ -101,7 +105,7 @@ test('getMessagesPaginated calls invoke with correct parameters', async () => {
 });
 
 test('countMessagesInFolder calls invoke with folder ID', async () => {
-  (invoke as any).mockResolvedValue(42);
+  mockInvoke.mockResolvedValue(42);
 
   const result = await countMessagesInFolder(1);
 
@@ -110,7 +114,7 @@ test('countMessagesInFolder calls invoke with folder ID', async () => {
 });
 
 test('downloadAttachment calls invoke with correct parameters', async () => {
-  (invoke as any).mockResolvedValue(undefined);
+  mockInvoke.mockResolvedValue(undefined);
 
   await downloadAttachment(1, '/path/to/save');
 

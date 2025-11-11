@@ -8,6 +8,8 @@
   export let totalMessages = 0;
   export let pageSize = 50;
 
+  let selectedPageSize: { value: string } | undefined = undefined;
+
   const dispatch = createEventDispatcher<{
     pageChange: { page: number; pageSize: number };
   }>();
@@ -15,6 +17,11 @@
   $: totalPages = Math.ceil(totalMessages / pageSize);
   $: startIndex = (currentPage - 1) * pageSize + 1;
   $: endIndex = Math.min(currentPage * pageSize, totalMessages);
+
+  $: if (selectedPageSize) {
+    const newPageSize = parseInt(selectedPageSize.value);
+    dispatch('pageChange', { page: 1, pageSize: newPageSize });
+  }
 
   function handlePreviousPage() {
     if (currentPage > 1) {
@@ -29,12 +36,6 @@
       dispatch('pageChange', { page: newPage, pageSize });
     }
   }
-
-  function handlePageSizeChange(value: string | undefined) {
-    if (!value) return;
-    const newPageSize = parseInt(value);
-    dispatch('pageChange', { page: 1, pageSize: newPageSize });
-  }
 </script>
 
 <div class="flex items-center justify-between p-2 border-t bg-background">
@@ -47,7 +48,7 @@
   <div class="flex items-center gap-2">
     <div class="flex items-center gap-2 text-sm">
       <span class="text-muted-foreground">Per page:</span>
-      <Select.Root onValueChange={handlePageSizeChange}>
+      <Select.Root bind:selected={selectedPageSize}>
         <Select.Trigger class="w-20 h-8">
           <Select.Value placeholder={pageSize.toString()} />
         </Select.Trigger>

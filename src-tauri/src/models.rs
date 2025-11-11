@@ -15,6 +15,7 @@ pub struct Folder {
     pub name: String,
     pub path: String,
     pub parent_id: Option<i64>,
+    pub uid_validity: Option<u32>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
