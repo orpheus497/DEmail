@@ -1,6 +1,6 @@
 use crate::core::accounts::get_refresh_token;
 use crate::core::cache::db::{
-    save_attachment, save_attachment_data, save_folder, save_message, Pool,
+    save_attachment, save_attachment_data, save_folder, save_message, update_folder_uid_validity, Pool,
 };
 use crate::core::contacts;
 use crate::core::threading;
@@ -99,6 +99,7 @@ impl ImapSync {
                 name: mailbox.name().to_string(),
                 path: mailbox.name().to_string(),
                 parent_id: None,
+                uid_validity: None, // Will be updated when folder is selected
             };
             save_folder(pool, &mut folder)?;
             folders.push(folder);
@@ -112,7 +113,14 @@ impl ImapSync {
         account_id: i64,
         folder: &Folder,
     ) -> Result<(), DEmailError> {
-        session.select(&folder.path)?;
+        let mailbox = session.select(&folder.path)?;
+
+        // Update folder with uid_validity from mailbox if needed
+        if folder.uid_validity.is_none() || folder.uid_validity != mailbox.uid_validity {
+            if let Err(e) = update_folder_uid_validity(&self.app_state.db_pool, folder.id, mailbox.uid_validity) {
+                eprintln!("Warning: Failed to update folder uid_validity: {}", e);
+            }
+        }
         let uids: Vec<Uid> = session.uid_search("ALL")?.into_iter().collect();
         if uids.is_empty() {
             return Ok(());
@@ -169,12 +177,12 @@ impl ImapSync {
                     let message_id = conn.last_insert_rowid();
                     message.id = message_id;
 
-                    // Phase 3: Threading integration (stub call for Phase 2)
+                    // Threading integration: organize messages into conversation threads
                     if let Ok(_thread_id) = threading::create_or_update_thread(&conn, &message) {
                         // Thread created/updated successfully
                     }
 
-                    // Phase 3: Contacts extraction (stub call for Phase 2)
+                    // Contacts extraction: extract and save contact information from message headers
                     let _ = contacts::extract_and_save_contacts(
                         &conn,
                         &from_str,

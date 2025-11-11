@@ -74,7 +74,7 @@ pub fn get_folders(
         .map_err(|_| DEmailError::Database(rusqlite::Error::InvalidQuery))?;
 
     let mut stmt = conn.prepare(
-        "SELECT id, account_id, name, path, parent_id FROM folders WHERE account_id = ?1",
+        "SELECT id, account_id, name, path, parent_id, uid_validity FROM folders WHERE account_id = ?1",
     )?;
     let folder_iter = stmt.query_map([&account_id], |row| {
         Ok(crate::models::Folder {
@@ -83,6 +83,7 @@ pub fn get_folders(
             name: row.get(2)?,
             path: row.get(3)?,
             parent_id: row.get(4)?,
+            uid_validity: row.get(5)?,
         })
     })?;
 

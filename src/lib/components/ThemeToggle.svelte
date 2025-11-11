@@ -7,23 +7,25 @@
   let theme: 'light' | 'dark' = 'light';
   let loading = true;
 
-  onMount(async () => {
-    try {
-      // Load theme from settings
-      const savedTheme = await getSetting('theme');
-      if (savedTheme === 'dark' || savedTheme === 'light') {
-        theme = savedTheme;
-      } else {
-        // Check system preference
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        theme = prefersDark ? 'dark' : 'light';
+  onMount(() => {
+    // Load theme from settings asynchronously
+    (async () => {
+      try {
+        const savedTheme = await getSetting('theme');
+        if (savedTheme === 'dark' || savedTheme === 'light') {
+          theme = savedTheme;
+        } else {
+          // Check system preference
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          theme = prefersDark ? 'dark' : 'light';
+        }
+        applyTheme(theme);
+      } catch (error) {
+        console.error('Failed to load theme:', error);
+      } finally {
+        loading = false;
       }
-      applyTheme(theme);
-    } catch (error) {
-      console.error('Failed to load theme:', error);
-    } finally {
-      loading = false;
-    }
+    })();
 
     // Listen for system theme changes
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');

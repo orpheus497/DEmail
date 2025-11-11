@@ -179,9 +179,9 @@
       const draft: Draft = {
         id: currentDraftId || draftId || 0,
         account_id: accountId,
-        to_header: to,
-        cc_header: cc || null,
-        bcc_header: bcc || null,
+        to_addresses: to,
+        cc_addresses: cc || null,
+        bcc_addresses: bcc || null,
         subject,
         body_plain: body,
         body_html: null,

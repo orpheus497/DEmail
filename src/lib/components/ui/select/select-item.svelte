@@ -6,11 +6,18 @@
   type $$Props = SelectPrimitive.ItemProps;
   type $$Events = SelectPrimitive.ItemEvents;
 
+  export let value: $$Props['value'];
+  export let label: $$Props['label'] = undefined;
+  export let disabled: $$Props['disabled'] = undefined;
+
   let className: $$Props['class'] = undefined;
   export { className as class };
 </script>
 
 <SelectPrimitive.Item
+  {value}
+  {label}
+  {disabled}
   class={cn(
     'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
     className

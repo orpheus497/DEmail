@@ -471,14 +471,13 @@ const createMailboxStore = () => {
   // ==================== Phase 5: Pagination ====================
 
   const loadMoreMessages = async () => {
-    let currentState: MailboxStore | null = null;
+    let currentState!: MailboxStore;
     const unsub = subscribe((state) => {
       currentState = state;
     });
     unsub();
 
     if (
-      !currentState ||
       !currentState.selectedFolder ||
       currentState.loading ||
       !currentState.hasMore
@@ -486,13 +485,16 @@ const createMailboxStore = () => {
       return;
     }
 
-    update((state) => ({ ...state, loading: true, error: null }));
+    const folderId = currentState.selectedFolder.id;
+    const offset = currentState.currentPage * currentState.pageSize;
+    const pageSize = currentState.pageSize;
+
+    update((s) => ({ ...s, loading: true, error: null }));
 
     try {
-      const offset = currentState.currentPage * currentState.pageSize;
       const newMessages = await getMessagesPaginated(
-        currentState.selectedFolder.id,
-        currentState.pageSize,
+        folderId,
+        pageSize,
         offset
       );
 
